@@ -2,19 +2,22 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+// Import xlsx untuk fitur download
+import * as XLSX from 'xlsx'
 
 export default function DaftarSkBupati() {
   const [skData, setSkData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   
+  // --- STATE UNTUK PENCARIAN & FILTER ---
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   
+  // Filter Tanggal SK
   const [startTanggalSk, setStartTanggalSk] = useState('')
   const [endTanggalSk, setEndTanggalSk] = useState('')
-  const [startTanggalKirim, setStartTanggalKirim] = useState('')
-  const [endTanggalKirim, setEndTanggalKirim] = useState('')
   
+  // STATE PAGINATION
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -27,6 +30,7 @@ export default function DaftarSkBupati() {
     try {
       setLoading(true)
       // MENGGUNAKAN SOFT DELETE: Hanya ambil data yang is_deleted = false atau null
+      // Endpoint tabel disesuaikan menjadi sk_bupati
       const { data, error } = await supabase
         .from('sk_bupati')
         .select('*')
@@ -56,18 +60,17 @@ export default function DaftarSkBupati() {
     }
   }
 
+  // --- LOGIKA FILTERING ---
   const filteredSk = skData.filter((item) => {
     const searchLow = searchTerm.toLowerCase()
     const matchText = (
       (item.nomer_sk?.toLowerCase().includes(searchLow)) ||
       (item.tentang_sk?.toLowerCase().includes(searchLow)) ||
       (item.yang_membuat_sk?.toLowerCase().includes(searchLow)) ||
-      (item.nama_pengirim?.toLowerCase().includes(searchLow)) ||
-      (item.diterima_oleh?.toLowerCase().includes(searchLow))
+      (item.keterangan?.toLowerCase().includes(searchLow))
     )
 
     const dateSk = item.tanggal_sk ? item.tanggal_sk.substring(0, 10) : ''
-    const dateKirim = item.tanggal_pengirim ? item.tanggal_pengirim.substring(0, 10) : ''
     
     let matchSkDate = true
     if (startTanggalSk && endTanggalSk) {
@@ -78,16 +81,7 @@ export default function DaftarSkBupati() {
       matchSkDate = dateSk <= endTanggalSk
     }
 
-    let matchKirimDate = true
-    if (startTanggalKirim && endTanggalKirim) {
-      matchKirimDate = dateKirim >= startTanggalKirim && dateKirim <= endTanggalKirim
-    } else if (startTanggalKirim) {
-      matchKirimDate = dateKirim >= startTanggalKirim
-    } else if (endTanggalKirim) {
-      matchKirimDate = dateKirim <= endTanggalKirim
-    }
-
-    return matchText && matchSkDate && matchKirimDate
+    return matchText && matchSkDate
   })
 
   const indexOfLastItem = currentPage * itemsPerPage
@@ -97,7 +91,34 @@ export default function DaftarSkBupati() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, startTanggalSk, endTanggalSk, startTanggalKirim, endTanggalKirim])
+  }, [searchTerm, startTanggalSk, endTanggalSk])
+
+  // --- FUNGSI DOWNLOAD EXCEL ---
+  const downloadToExcel = () => {
+    if (filteredSk.length === 0) {
+      alert("Tidak ada data untuk didownload");
+      return;
+    }
+
+    // Mapping data agar rapi di Excel
+    const dataToExport = filteredSk.map((item, index) => ({
+      No: index + 1,
+      'Tanggal SK': formatDate(item.tanggal_sk),
+      'Nomor SK': item.nomer_sk || '-',
+      'Tentang / Perihal': item.tentang_sk || '-',
+      'Pembuat SK': item.yang_membuat_sk || '-',
+      'Keterangan': item.keterangan || '-',
+      'Link File': item.file_url || '-',
+      'Link Konsep': item.file_mentahan_url || '-'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar SK Bupati");
+
+    // Generate file dan download
+    XLSX.writeFile(workbook, `Arsip_SK_Bupati_${new Date().toISOString().split('T')[0]}.xlsx`);
+  }
 
   // --- FUNGSI PROSES SOFT DELETE ---
   async function confirmSoftDelete() {
@@ -178,21 +199,32 @@ export default function DaftarSkBupati() {
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 border-b-4 border-blue-600 pb-8 gap-6 w-full">
           <div className="flex items-center gap-6">
              <div className="bg-blue-600 text-white p-6 rounded-[2rem] text-5xl shadow-2xl shadow-blue-300 font-black">
-                🏛️
+               🏛️
              </div>
              <div>
-                <h1 className="text-7xl font-black tracking-tighter uppercase leading-none text-black">
+                <h1 className="text-6xl font-black tracking-tighter uppercase leading-none text-black">
                   SK <span className="text-blue-600">BUPATI</span>
                 </h1>
-                <p className="text-black font-black tracking-[0.4em] text-sm mt-2 uppercase">ARSIP SK BUPATI CLOUD DATABASE</p>
+                <p className="text-black font-black tracking-[0.4em] text-base mt-2 uppercase">ARSIP SK BUPATI CLOUD DATABASE</p>
              </div>
           </div>
-          <Link 
-            href="/sk_bupati/tambah"
-            className="bg-blue-600 hover:bg-slate-900 text-white px-12 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-blue-200 transition-all active:scale-95 uppercase tracking-widest text-lg"
-          >
-            TAMBAH SK BARU
-          </Link>
+          
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* TOMBOL DOWNLOAD EXCEL BARU */}
+            <button 
+              onClick={downloadToExcel}
+              className="bg-emerald-600 hover:bg-slate-900 text-white px-12 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-emerald-200 transition-all active:scale-95 uppercase tracking-widest text-lg flex items-center gap-2"
+            >
+              DOWNLOAD EXCEL
+            </button>
+
+            <Link 
+              href="/sk_bupati/tambah"
+              className="bg-blue-600 hover:bg-slate-900 text-white px-12 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-blue-200 transition-all active:scale-95 uppercase tracking-widest text-lg text-center"
+            >
+              TAMBAH SK BARU
+            </Link>
+          </div>
         </div>
 
         {/* SECTION PENCARIAN & FILTER */}
@@ -201,10 +233,10 @@ export default function DaftarSkBupati() {
             <div className="relative flex-1">
               <input 
                 type="text"
-                placeholder="KETIK UNTUK MENCARI NOMOR SK, TENTANG, PEMBUAT, PENGIRIM, ATAU PENERIMA..."
+                placeholder="KETIK UNTUK MENCARI NOMOR SK, TENTANG, PEMBUAT, ATAU KETERANGAN..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-8 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest block"
+                className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-7 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest"
               />
               {searchTerm && (
                 <button 
@@ -217,7 +249,7 @@ export default function DaftarSkBupati() {
             </div>
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`${showFilters ? 'bg-slate-900 text-white' : 'bg-white text-blue-600'} border-4 border-white shadow-2xl rounded-[2.5rem] px-12 py-8 text-sm font-black transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter`}
+              className={`${showFilters ? 'bg-slate-900 text-white' : 'bg-white text-blue-600'} border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-7 text-base font-black transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter`}
             >
               {showFilters ? 'TUTUP FILTER ▲' : 'FILTER TANGGAL ▼'}
             </button>
@@ -225,8 +257,8 @@ export default function DaftarSkBupati() {
 
           {/* PANEL FILTER TANGGAL */}
           {showFilters && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="bg-white p-8 rounded-[3rem] shadow-xl border-4 border-blue-50">
+            <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="bg-white p-8 rounded-[3rem] shadow-xl border-4 border-blue-50 max-w-2xl">
                  <h3 className="text-blue-600 font-black uppercase text-sm mb-4 tracking-widest flex items-center gap-2">
                    <span className="w-3 h-3 bg-blue-600 rounded-full"></span> RENTANG TANGGAL SK
                  </h3>
@@ -245,26 +277,6 @@ export default function DaftarSkBupati() {
                     />
                  </div>
               </div>
-
-              <div className="bg-white p-8 rounded-[3rem] shadow-xl border-4 border-slate-50">
-                 <h3 className="text-slate-500 font-black uppercase text-sm mb-4 tracking-widest flex items-center gap-2">
-                   <span className="w-3 h-3 bg-slate-400 rounded-full"></span> RENTANG TANGGAL KIRIM
-                 </h3>
-                 <div className="grid grid-cols-2 gap-4">
-                    <input 
-                      type="date"
-                      value={startTanggalKirim}
-                      onChange={(e) => setStartTanggalKirim(e.target.value)}
-                      className="bg-slate-50 p-4 rounded-2xl font-black focus:outline-none focus:ring-2 focus:ring-slate-900 uppercase"
-                    />
-                    <input 
-                      type="date"
-                      value={endTanggalKirim}
-                      onChange={(e) => setEndTanggalKirim(e.target.value)}
-                      className="bg-slate-50 p-4 rounded-2xl font-black focus:outline-none focus:ring-2 focus:ring-slate-900 uppercase"
-                    />
-                 </div>
-              </div>
             </div>
           )}
         </div>
@@ -278,23 +290,22 @@ export default function DaftarSkBupati() {
           <div className="w-full">
             <div className="bg-white rounded-[4rem] shadow-[0_40px_100px_rgba(29,78,216,0.1)] overflow-hidden border-8 border-white w-full">
               <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse table-fixed">
                   <thead>
                     <tr className="bg-slate-900 text-white">
-                      <th className="px-6 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-20">NO</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center">TGL SK</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">NOMOR SK</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">TENTANG / PERIHAL</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">PEMBUAT SK</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center">PENGIRIMAN</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">PENERIMA</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm text-center">AKSI</th>
+                      <th className="px-6 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-24">NO</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-44">TGL SK</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-64">NOMOR SK</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-72">TENTANG / PERIHAL</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-60">PEMBUAT SK</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-64">KETERANGAN</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm text-center w-52">AKSI</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y-2 divide-slate-200">
                     {currentItems.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="text-center py-20 text-slate-300 font-black uppercase tracking-widest italic text-2xl">
+                        <td colSpan={7} className="text-center py-20 text-slate-300 font-black uppercase tracking-widest italic text-2xl">
                           HASIL PENCARIAN TIDAK DITEMUKAN
                         </td>
                       </tr>
@@ -310,54 +321,72 @@ export default function DaftarSkBupati() {
                             </div>
                           </td>
                           <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-black text-2xl tracking-tighter uppercase">{item.nomer_sk || 'TANPA NOMOR'}</p>
+                            <p className="font-black text-black text-2xl tracking-tighter uppercase truncate overflow-hidden" title={item.nomer_sk}>
+                                {item.nomer_sk || 'TANPA NOMOR'}
+                            </p>
                           </td>
                           <td className="px-8 py-12 border-r border-slate-100">
-                            <div className="max-w-[250px]">
-                               <p className="text-black font-black uppercase text-sm leading-relaxed">{item.tentang_sk || '-'}</p>
+                            <div className="w-full">
+                               <p className="text-black font-black uppercase text-sm leading-relaxed line-clamp-3 overflow-hidden break-words" title={item.tentang_sk}>
+                                   {item.tentang_sk || '-'}
+                               </p>
                             </div>
                           </td>
                           <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-blue-600 text-lg uppercase italic">{item.yang_membuat_sk || '-'}</p>
-                          </td>
-                          <td className="px-8 py-12 border-r border-slate-100 text-center min-w-[280px]">
-                            <div className="flex flex-col gap-4 py-2">
-                                <p className="font-black text-black text-2xl uppercase tracking-tighter leading-none">
-                                  {item.nama_pengirim || '-'}
-                                </p>
-                                <div className="space-y-3 mt-2">
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-[0.2em]">Tanggal Kirim:</span>
-                                    <p className="text-sm font-black uppercase text-blue-600 tracking-wide">
-                                      {formatDate(item.tanggal_pengirim)}
-                                    </p>
-                                  </div>
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-[0.2em]">Arsip Fisik:</span>
-                                    <p className={`text-sm font-black uppercase tracking-wide ${item.tanggal_kembali ? 'text-green-600' : 'text-red-600 animate-pulse'}`}>
-                                      {item.tanggal_kembali 
-                                        ? `KEMBALI: ${formatDate(item.tanggal_kembali)}` 
-                                        : 'BELUM KEMBALI'}
-                                    </p>
-                                  </div>
-                                </div>
-                            </div>
+                            <p className="font-black text-blue-600 text-lg uppercase italic truncate" title={item.yang_membuat_sk}>
+                                {item.yang_membuat_sk || '-'}
+                            </p>
                           </td>
                           <td className="px-8 py-12 border-r border-slate-100">
-                             <p className="font-black text-black text-lg uppercase leading-tight">{item.diterima_oleh || '-'}</p>
+                            <div className="w-full">
+                               <p className="text-slate-500 font-bold uppercase text-xs leading-relaxed line-clamp-3 overflow-hidden break-words" title={item.keterangan}>
+                                   {item.keterangan || '-'}
+                               </p>
+                            </div>
                           </td>
                           <td className="px-8 py-12 text-center">
                             <div className="flex flex-col gap-3 min-w-[160px]">
+                              {/* TOMBOL PDF UTAMA */}
                               {item.file_url ? (
-                                  <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white py-4 rounded-2xl text-xs font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest">
-                                   BUKA DRIVE ↗
-                                 </a>
+                                  <a 
+                                    href={item.file_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="bg-blue-600 text-white py-4 rounded-2xl text-xs font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest"
+                                  >
+                                    LIHAT SK ↗
+                                  </a>
                               ) : (
-                                <span className="text-slate-400 text-[10px] uppercase italic">Link Tidak Tersedia</span>
+                                <span className="text-slate-400 text-[10px] uppercase italic">SK Tidak Tersedia</span>
                               )}
+
+                              {/* TOMBOL FILE KONSEP (FILE MENTAHAN) */}
+                              {item.file_mentahan_url ? (
+                                  <a 
+                                    href={item.file_mentahan_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="bg-emerald-600 text-white py-4 rounded-2xl text-xs font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest"
+                                  >
+                                    KONSEP ↗
+                                  </a>
+                              ) : (
+                                <span className="text-slate-400 text-[10px] uppercase italic">Konsep Tidak Ada</span>
+                              )}
+
                               <div className="grid grid-cols-2 gap-3">
-                                <Link href={`/sk_bupati/edit/${item.id}`} className="bg-slate-200 text-black py-3 rounded-2xl text-xs font-black uppercase text-center hover:bg-blue-600 hover:text-white transition-all">EDIT</Link>
-                                <button onClick={() => openDeleteModal(item.id)} className="bg-red-100 text-red-600 py-3 rounded-2xl text-xs font-black uppercase text-center hover:bg-red-600 hover:text-white transition-all">HAPUS</button>
+                                <Link 
+                                  href={`/sk_bupati/edit/${item.id}`} 
+                                  className="bg-slate-200 text-black py-3 rounded-2xl text-xs font-black uppercase text-center hover:bg-blue-600 hover:text-white transition-all"
+                                >
+                                  EDIT
+                                </Link>
+                                <button 
+                                  onClick={() => openDeleteModal(item.id)} 
+                                  className="bg-red-100 text-red-600 py-3 rounded-2xl text-xs font-black uppercase text-center hover:bg-red-600 hover:text-white transition-all"
+                                >
+                                  HAPUS
+                                </button>
                               </div>
                             </div>
                           </td>
@@ -373,15 +402,31 @@ export default function DaftarSkBupati() {
             {totalPages > 1 && (
               <div className="mt-16 flex flex-col items-center gap-8 w-full">
                 <div className="flex justify-center items-center gap-6">
-                  <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="bg-white px-8 py-5 rounded-[1.5rem] font-black shadow-xl disabled:opacity-30 hover:bg-blue-600 hover:text-white transition-all text-black text-lg border-2 border-slate-100 uppercase">Prev</button>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                    disabled={currentPage === 1} 
+                    className="bg-white px-8 py-5 rounded-[1.5rem] font-black shadow-xl disabled:opacity-30 hover:bg-blue-600 hover:text-white transition-all text-black text-lg border-2 border-slate-100 uppercase"
+                  >
+                    Prev
+                  </button>
                   <div className="flex gap-3 bg-white p-4 rounded-[2.5rem] shadow-2xl border-4 border-blue-50">
                     {[...Array(totalPages)].map((_, index) => (
-                        <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`w-16 h-16 rounded-2xl font-black text-xl transition-all ${currentPage === index + 1 ? 'bg-blue-600 text-white scale-110 shadow-lg shadow-blue-300' : 'hover:bg-blue-50 text-black'}`}>
+                        <button 
+                          key={index + 1} 
+                          onClick={() => setCurrentPage(index + 1)} 
+                          className={`w-16 h-16 rounded-2xl font-black text-xl transition-all ${currentPage === index + 1 ? 'bg-blue-600 text-white scale-110 shadow-lg shadow-blue-300' : 'hover:bg-blue-50 text-black'}`}
+                        >
                           {index + 1}
                         </button>
                     ))}
                   </div>
-                  <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="bg-white px-8 py-5 rounded-[1.5rem] font-black shadow-xl disabled:opacity-30 hover:bg-blue-600 hover:text-white transition-all text-black text-lg border-2 border-slate-100 uppercase">Next</button>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                    disabled={currentPage === totalPages} 
+                    className="bg-white px-8 py-5 rounded-[1.5rem] font-black shadow-xl disabled:opacity-30 hover:bg-blue-600 hover:text-white transition-all text-black text-lg border-2 border-slate-100 uppercase"
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
             )}

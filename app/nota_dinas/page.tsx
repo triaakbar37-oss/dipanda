@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import * as XLSX from 'xlsx' // Import library XLSX
 
 export default function DaftarNotaDinas() {
   const [nota, setNota] = useState<any[]>([])
@@ -29,8 +30,6 @@ export default function DaftarNotaDinas() {
   async function fetchNota() {
     try {
       setLoading(true)
-      // MENGGUNAKAN KOLOM is_deleted SESUAI DATABASE ANDA
-      // Kita hanya mengambil data yang is_deleted = false (atau null jika defaultnya null)
       const { data, error } = await supabase
         .from('nota_dinas')
         .select('*')
@@ -65,10 +64,9 @@ export default function DaftarNotaDinas() {
     const searchLow = searchTerm.toLowerCase()
     const matchText = (
       (item.nomer_surat?.toLowerCase().includes(searchLow)) ||
-      (item.pengirim?.toLowerCase().includes(searchLow)) ||
-      (item.penerima?.toLowerCase().includes(searchLow)) ||
       (item.yang_membuat?.toLowerCase().includes(searchLow)) ||
-      (item.perihal?.toLowerCase().includes(searchLow))
+      (item.perihal?.toLowerCase().includes(searchLow)) ||
+      (item.keterangan?.toLowerCase().includes(searchLow))
     )
 
     const dateSk = item.tanggal_fisik ? item.tanggal_fisik.substring(0, 10) : ''
@@ -95,6 +93,34 @@ export default function DaftarNotaDinas() {
     return matchText && matchSk && matchKirim
   })
 
+  // --- FUNGSI DOWNLOAD EXCEL ---
+  const downloadExcel = () => {
+    if (filteredNota.length === 0) {
+      alert("Tidak ada data untuk didownload");
+      return;
+    }
+
+    // Map data agar format di Excel rapi
+    const dataToExport = filteredNota.map((item, index) => ({
+      'NO': index + 1,
+      'TANGGAL FISIK': formatDate(item.tanggal_fisik),
+      'TANGGAL KIRIM': formatDate(item.tanggal_dikirim),
+      'NOMOR NOTA DINAS': item.nomer_surat || '-',
+      'PEMBUAT': item.yang_membuat || '-',
+      'PERIHAL': item.perihal || '-',
+      'KETERANGAN': item.keterangan || '-',
+      'LINK PDF': item.file_url || '-',
+      'LINK KONSEP': item.file_mentahan_url || '-'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Nota Dinas");
+
+    // Download file
+    XLSX.writeFile(workbook, `Arsip_Nota_Dinas_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentItems = filteredNota.slice(indexOfFirstItem, indexOfLastItem)
@@ -104,13 +130,11 @@ export default function DaftarNotaDinas() {
     setCurrentPage(1)
   }, [searchTerm, startTanggalSk, endTanggalSk, startTanggalKirim, endTanggalKirim])
 
-  // --- FUNGSI SOFT DELETE (UPDATE is_deleted MENJADI TRUE) ---
   async function confirmSoftDelete() {
     if (!selectedId) return
     
     try {
       setIsDeleting(true)
-      // MENGUBAH is_deleted MENJADI TRUE AGAR MASUK KE "SAMPAH"
       const { error } = await supabase
         .from('nota_dinas')
         .update({ is_deleted: true })
@@ -120,7 +144,7 @@ export default function DaftarNotaDinas() {
       
       setShowDeleteModal(false)
       setSelectedId(null)
-      fetchNota() // Muat ulang data tabel utama
+      fetchNota() 
     } catch (error: any) {
       alert("Gagal menghapus: " + error.message)
     } finally {
@@ -180,24 +204,35 @@ export default function DaftarNotaDinas() {
       <div className="w-full mx-auto">
         
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 border-b-4 border-blue-600 pb-8 gap-6 w-full">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-10 border-b-4 border-blue-600 pb-8 gap-6">
           <div className="flex items-center gap-6">
              <div className="bg-blue-600 text-white p-6 rounded-[2rem] text-5xl shadow-2xl shadow-blue-300 font-black">
-                📝
+               📝
              </div>
              <div>
-                <h1 className="text-7xl font-black tracking-tighter uppercase leading-none text-black">
+                <h1 className="text-6xl font-black tracking-tighter uppercase leading-none text-black">
                   NOTA <span className="text-blue-600">DINAS</span>
                 </h1>
-                <p className="text-black font-black tracking-[0.4em] text-sm mt-2 uppercase">ARSIP NOTA DINAS CLOUD DATABASE</p>
+                <p className="text-black font-black tracking-[0.4em] text-base mt-2 uppercase">ARSIP NOTA DINAS CLOUD DATABASE</p>
              </div>
           </div>
-          <Link 
-            href="/nota_dinas/tambah"
-            className="bg-blue-600 hover:bg-slate-900 text-white px-12 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-blue-200 transition-all active:scale-95 uppercase tracking-widest text-lg"
-          >
-            TAMBAH NOTA BARU
-          </Link>
+          
+          <div className="flex flex-row gap-4">
+            {/* TOMBOL DOWNLOAD EXCEL - DITAMBAHKAN DISINI */}
+            <button 
+              onClick={downloadExcel}
+              className="bg-emerald-600 hover:bg-slate-900 text-white px-10 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-emerald-200 transition-all active:scale-95 uppercase tracking-widest text-lg"
+            >
+              DOWNLOAD EXCEL
+            </button>
+
+            <Link 
+              href="/nota_dinas/tambah"
+              className="bg-blue-600 hover:bg-slate-900 text-white px-12 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-blue-200 transition-all active:scale-95 uppercase tracking-widest text-lg"
+            >
+              TAMBAH NOTA BARU
+            </Link>
+          </div>
         </div>
 
         {/* --- PENCARIAN & TOGGLE FILTER --- */}
@@ -206,26 +241,25 @@ export default function DaftarNotaDinas() {
             <div className="relative flex-1">
               <input 
                 type="text"
-                placeholder="CARI BERDASARKAN NOMOR, PENGIRIM, PENERIMA, ATAU PERIHAL..."
+                placeholder="CARI BERDASARKAN NOMOR, PEMBUAT, PERIHAL, ATAU KETERANGAN..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-8 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest block"
+                className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-7 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest"
               />
             </div>
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`${showFilters ? 'bg-slate-900 text-white' : 'bg-white text-blue-600'} border-4 border-white shadow-2xl rounded-[2.5rem] px-12 py-8 text-sm font-black transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter`}
+              className={`${showFilters ? 'bg-slate-900 text-white' : 'bg-white text-blue-600'} border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-7 text-base font-black transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter`}
             >
               {showFilters ? 'Tutup Filter ▲' : 'Filter Tanggal ▼'}
             </button>
           </div>
 
-          {/* PANEL FILTER TANGGAL */}
           {showFilters && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="bg-white p-8 rounded-[3rem] shadow-xl border-4 border-blue-50">
                 <h3 className="text-blue-600 font-black uppercase text-sm mb-4 tracking-widest flex items-center gap-2">
-                  <span className="w-3 h-3 bg-blue-600 rounded-full"></span> RENTANG TANGGAL SK
+                  <span className="w-3 h-3 bg-blue-600 rounded-full"></span> RENTANG TANGGAL FISIK (SK)
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <input 
@@ -275,24 +309,23 @@ export default function DaftarNotaDinas() {
           <div className="w-full">
             <div className="bg-white rounded-[4rem] shadow-[0_40px_100px_rgba(29,78,216,0.1)] overflow-hidden border-8 border-white w-full">
               <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse table-fixed">
                   <thead>
                     <tr className="bg-slate-900 text-white">
-                      <th className="px-6 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-20">NO</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center">TGL SK</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center">TGL KIRIM</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">NOMOR NODIN</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">PENGIRIM</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">PENERIMA KEMBALI</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">PEMBUAT</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">PERIHAL</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm text-center">AKSI</th>
+                      <th className="px-6 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-24">NO</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-40">TGL FISIK</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-40">TGL KIRIM</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-64">NOMOR NODIN</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-56">PEMBUAT</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-72">PERIHAL</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-64">KETERANGAN</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm text-center w-48">AKSI</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y-2 divide-slate-200">
                     {currentItems.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="text-center py-20 text-slate-300 font-black uppercase tracking-widest italic text-2xl">
+                        <td colSpan={8} className="text-center py-20 text-slate-300 font-black uppercase tracking-widest italic text-2xl">
                           HASIL PENCARIAN TIDAK DITEMUKAN
                         </td>
                       </tr>
@@ -313,36 +346,57 @@ export default function DaftarNotaDinas() {
                             </div>
                           </td>
                           <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-black text-2xl tracking-tighter uppercase">{item.nomer_surat || 'TANPA NOMOR'}</p>
+                            <p className="font-black text-black text-2xl tracking-tighter uppercase truncate overflow-hidden" title={item.nomer_surat}>
+                                {item.nomer_surat || 'TANPA NOMOR'}
+                            </p>
                           </td>
                           <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-black text-lg leading-tight uppercase">{item.pengirim || '-'}</p>
+                            <p className="font-black text-blue-600 text-lg uppercase italic truncate" title={item.yang_membuat}>
+                                {item.yang_membuat || '-'}
+                            </p>
                           </td>
                           <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-blue-800 text-lg leading-tight uppercase">{item.penerima || '-'}</p>
+                            <div className="w-full">
+                               <p className="text-black font-black uppercase text-sm leading-relaxed line-clamp-3 overflow-hidden break-words" title={item.perihal}>
+                                   {item.perihal || '-'}
+                               </p>
+                            </div>
                           </td>
                           <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-blue-600 text-lg uppercase italic">{item.yang_membuat || '-'}</p>
-                          </td>
-                          <td className="px-8 py-12 border-r border-slate-100">
-                            <div className="max-w-[280px]">
-                               <p className="text-black font-black uppercase text-sm leading-relaxed">{item.perihal || '-'}</p>
+                            <div className="w-full">
+                               <p className="text-slate-500 font-bold uppercase text-xs leading-relaxed line-clamp-3 overflow-hidden break-words" title={item.keterangan}>
+                                   {item.keterangan || '-'}
+                               </p>
                             </div>
                           </td>
                           <td className="px-8 py-12 text-center">
                             <div className="flex flex-col gap-3 min-w-[160px]">
                               {item.file_url ? (
                                   <a 
-                                   href={item.file_url} 
-                                   target="_blank" 
-                                   rel="noopener noreferrer"
-                                   className="bg-blue-600 text-white py-4 rounded-2xl text-xs font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest"
-                                 >
-                                   BUKA DRIVE ↗
-                                 </a>
+                                    href={item.file_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="bg-blue-600 text-white py-4 rounded-2xl text-xs font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest"
+                                  >
+                                    LIHAT PDF ↗
+                                  </a>
                                ) : (
-                                 <span className="text-slate-400 text-[10px] uppercase italic">Link Tidak Tersedia</span>
+                                  <span className="text-slate-400 text-[10px] uppercase italic">PDF Tidak Ada</span>
                                )}
+
+                               {item.file_mentahan_url ? (
+                                  <a 
+                                    href={item.file_mentahan_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="bg-emerald-600 text-white py-4 rounded-2xl text-xs font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest"
+                                  >
+                                    FILE KONSEP ↗
+                                  </a>
+                               ) : (
+                                  <span className="text-slate-400 text-[10px] uppercase italic">Konsep Tidak Ada</span>
+                               )}
+
                               <div className="grid grid-cols-2 gap-3">
                                 <Link 
                                   href={`/nota_dinas/edit/${item.id}`} 

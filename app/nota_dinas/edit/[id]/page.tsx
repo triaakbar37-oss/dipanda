@@ -8,19 +8,20 @@ export default function EditNotaDinas({ params }: { params: Promise<{ id: string
   const router = useRouter()
   const { id } = use(params)
   
-  // State disesuaikan dengan struktur Nota Dinas di Supabase
+  // State disesuaikan dengan struktur Nota Dinas terbaru di Supabase
   const [nomerSurat, setNomerSurat] = useState('')
   const [tanggalFisik, setTanggalFisik] = useState('') 
   const [tanggalDikirim, setTanggalDikirim] = useState('') 
-  const [pengirim, setPengirim] = useState('')
   const [perihal, setPerihal] = useState('')
   const [yangMembuat, setYangMembuat] = useState('') 
   
-  // PENAMBAHAN: State untuk penerima (Opsional)
-  const [penerima, setPenerima] = useState('')
-  
-  // Perubahan: State untuk URL Google Drive (bukan File object)
+  // Perubahan: State untuk URL (bukan File object)
   const [fileUrl, setFileUrl] = useState('')
+  
+  // PENAMBAHAN STATE BARU SESUAI TAMBAH NOTA DINAS
+  const [keterangan, setKeterangan] = useState('')
+  const [fileMentahanUrl, setFileMentahanUrl] = useState('')
+
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
 
@@ -46,11 +47,12 @@ export default function EditNotaDinas({ params }: { params: Promise<{ id: string
           setNomerSurat(data.nomer_surat || '')
           setTanggalFisik(data.tanggal_fisik || '')
           setTanggalDikirim(data.tanggal_dikirim || '')
-          setPengirim(data.pengirim || '')
-          setPenerima(data.penerima || '') 
           setPerihal(data.perihal || '')
           setYangMembuat(data.yang_membuat || '')
           setFileUrl(data.file_url || '')
+          // Sinkronisasi data tambahan
+          setKeterangan(data.keterangan || '')
+          setFileMentahanUrl(data.file_mentahan_url || '')
         }
       } catch (error: any) {
         console.error('Fetch error:', error)
@@ -80,11 +82,13 @@ export default function EditNotaDinas({ params }: { params: Promise<{ id: string
           nomer_surat: nomerSurat,
           tanggal_fisik: tanggalFisik,
           tanggal_dikirim: tanggalDikirim,
-          pengirim: pengirim,
-          penerima: penerima, 
+          // PENGIRIM DAN PENERIMA DIHAPUS SESUAI INSTRUKSI
           perihal: perihal,
           yang_membuat: yangMembuat,
           file_url: fileUrl, 
+          // UPDATE KOLOM BARU
+          keterangan: keterangan,
+          file_mentahan_url: fileMentahanUrl,
         })
         .eq('id', id)
 
@@ -123,7 +127,7 @@ export default function EditNotaDinas({ params }: { params: Promise<{ id: string
         <div className="flex justify-between items-center mb-10 border-b-4 border-blue-600 pb-8">
           <div className="flex items-center gap-6">
               <div className="bg-blue-600 text-white p-5 rounded-[1.5rem] text-3xl shadow-xl shadow-blue-200 font-black text-center min-w-[80px]">
-                EDIT
+                📝
               </div>
               <div>
                  <h1 className="text-5xl font-black tracking-tighter uppercase leading-none text-black">
@@ -180,66 +184,60 @@ export default function EditNotaDinas({ params }: { params: Promise<{ id: string
           </div>
 
           <div>
-            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">
-              PENERIMA KEMBALI NOTA DINAS<span className="text-slate-400 font-medium normal-case text-[10px]">(OPSIONAL)</span>
-            </label>
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">YANG MEMBUAT</label>
             <input 
               type="text"
-              placeholder="NAMA PENERIMA / TUJUAN NOTA"
-              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-blue-200 transition-all shadow-inner text-black"
-              value={penerima}
-              onChange={(e) => setPenerima(e.target.value)}
+              required
+              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black"
+              value={yangMembuat}
+              onChange={(e) => setYangMembuat(e.target.value)}
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">PENGIRIM (BIDANG/INSTANSI)</label>
-              <input 
-                type="text"
-                required
-                className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black"
-                value={pengirim}
-                onChange={(e) => setPengirim(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">YANG MEMBUAT</label>
-              <input 
-                type="text"
-                required
-                className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black"
-                value={yangMembuat}
-                onChange={(e) => setYangMembuat(e.target.value)}
-              />
-            </div>
           </div>
 
           <div>
             <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">PERIHAL / RINGKASAN NOTA</label>
             <textarea 
               required
-              rows={3}
+              rows={2}
               className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner resize-none text-black"
               value={perihal}
               onChange={(e) => setPerihal(e.target.value)}
             />
           </div>
 
-          <div className="bg-slate-900 p-8 rounded-[2rem] shadow-2xl">
-            <label className="block text-sm font-black uppercase tracking-widest mb-2 text-white text-center">TAUTAN BERKAS DIGITAL (GOOGLE DRIVE)</label>
-            <p className="text-blue-400 text-[10px] text-center mb-4 uppercase">Tempelkan Link File Drive Anda di Sini</p>
-            <input 
-              type="url"
-              placeholder="https://drive.google.com/file/d/..."
-              className="w-full p-5 bg-slate-800 border-4 border-slate-700 focus:border-blue-600 rounded-[1.5rem] outline-none text-base font-bold text-white placeholder:text-slate-500 transition-all shadow-inner"
-              value={fileUrl}
-              onChange={(e) => setFileUrl(e.target.value)}
+          {/* KETERANGAN DIBUAT LEBIH BESAR (ROWS 6) */}
+          <div>
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">KETERANGAN TAMBAHAN <span className="text-slate-400 font-medium normal-case text-[10px]">(ASPEK DETAIL)</span></label>
+            <textarea 
+              placeholder="TAMBAHKAN DETAIL KETERANGAN SECARA LENGKAP DI SINI..."
+              rows={6}
+              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-blue-200 transition-all shadow-inner resize-none text-black"
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
             />
-            <p className="text-[10px] text-slate-400 text-center mt-3 uppercase tracking-widest">
-              Pastikan pengaturan akses link: "Siapa saja yang memiliki link"
-            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-slate-900 p-8 rounded-[2rem] shadow-2xl">
+              <label className="block text-xs font-black uppercase tracking-widest mb-4 text-white text-center">TAUTAN BERKAS DIGITAL (PDF)</label>
+              <input 
+                type="url"
+                placeholder="https://drive.google.com/file/d/..."
+                className="w-full p-5 bg-slate-800 border-4 border-slate-700 focus:border-blue-600 rounded-[1.5rem] outline-none text-sm font-bold text-white placeholder:text-slate-500 transition-all shadow-inner"
+                value={fileUrl}
+                onChange={(e) => setFileUrl(e.target.value)}
+              />
+            </div>
+            <div className="bg-slate-900 p-8 rounded-[2rem] shadow-2xl">
+              <label className="block text-xs font-black uppercase tracking-widest mb-4 text-white text-center">TAUTAN FILE KONSEP (FILE MENTAHAN)</label>
+              <input 
+                type="url"
+                placeholder="URL GOOGLE DRIVE FILE KONSEP"
+                className="w-full p-5 bg-slate-800 border-4 border-slate-700 focus:border-blue-600 rounded-[1.5rem] outline-none text-sm font-bold text-white placeholder:text-slate-500 transition-all shadow-inner"
+                value={fileMentahanUrl}
+                onChange={(e) => setFileMentahanUrl(e.target.value)}
+              />
+            </div>
           </div>
 
           <button 

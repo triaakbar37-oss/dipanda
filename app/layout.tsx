@@ -26,16 +26,21 @@ export default function RootLayout({
         {/* SIDEBAR - Gaya Kantor Profesional */}
         <aside className="w-80 bg-slate-900 text-white flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.05)] relative z-20 h-screen">
           
-          <div className="p-10 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-500/40">
-                <span className="text-2xl">📂</span>
-              </div>
-              <span className="text-3xl font-black tracking-tighter uppercase italic text-white">
-                E-Arsip
-              </span>
-            </div>
-          </div>
+  <div className="p-10 mb-4">
+    <div className="flex items-center gap-3">
+      <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-500/40 shrink-0">
+        <span className="text-2xl">📂</span>
+      </div>
+      <div className="flex flex-col">
+        <span className="text-3xl font-black tracking-tighter uppercase italic text-white leading-none">
+          E-Arsip DIPANDA
+        </span>
+        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-2 leading-tight normal-case">
+          (Digitalisasi Pelayanan dan Administrasi Pendidikan Dasar)
+        </span>
+      </div>
+    </div>
+  </div>
           
           <nav className="flex-1 px-6 space-y-4 overflow-y-auto pb-10 custom-scrollbar">
             <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Main Menu</div>
@@ -58,6 +63,13 @@ export default function RootLayout({
 
             <Link href="/nota_dinas" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/nota_dinas') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
               <span className="text-xl">📝</span> Nota Dinas
+            </Link>
+
+            {/* PENAMBAHAN MENU KEGIATAN */}
+            <div className="pt-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Pelaksanaan Tugas</div>
+
+            <Link href="/kegiatan" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/kegiatan') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
+              <span className="text-xl">📅</span> Kegiatan
             </Link>
 
             <div className="pt-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Keputusan (SK)</div>

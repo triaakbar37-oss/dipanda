@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 
 export default function Dashboard() {
   const [counts, setCounts] = useState({ 
-    masuk: 0, keluar: 0, notaDinas: 0, skBupati: 0, skKadin: 0 
+    masuk: 0, keluar: 0, notaDinas: 0, skBupati: 0, skKadin: 0, kegiatan: 0 
   })
   const [loading, setLoading] = useState(true)
 
@@ -14,16 +14,27 @@ export default function Dashboard() {
       try {
         setLoading(true)
         const [
-          { count: cMasuk }, { count: cKeluar }, { count: cNota }, { count: cSkBupati }, { count: cSkKadin }
+          { count: cMasuk }, 
+          { count: cKeluar }, 
+          { count: cNota }, 
+          { count: cSkBupati }, 
+          { count: cSkKadin },
+          { count: cKegiatan }
         ] = await Promise.all([
           supabase.from('surat_masuk').select('*', { count: 'exact', head: true }),
           supabase.from('surat_keluar').select('*', { count: 'exact', head: true }),
           supabase.from('nota_dinas').select('*', { count: 'exact', head: true }),
           supabase.from('sk_bupati').select('*', { count: 'exact', head: true }),
-          supabase.from('sk_kadin').select('*', { count: 'exact', head: true })
+          supabase.from('sk_kadin').select('*', { count: 'exact', head: true }),
+          supabase.from('kegiatan').select('*', { count: 'exact', head: true })
         ])
         setCounts({ 
-          masuk: cMasuk || 0, keluar: cKeluar || 0, notaDinas: cNota || 0, skBupati: cSkBupati || 0, skKadin: cSkKadin || 0 
+          masuk: cMasuk || 0, 
+          keluar: cKeluar || 0, 
+          notaDinas: cNota || 0, 
+          skBupati: cSkBupati || 0, 
+          skKadin: cSkKadin || 0,
+          kegiatan: cKegiatan || 0 
         })
       } catch (e) {
         console.error(e)
@@ -66,13 +77,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 2. STATISTIC BOXES - Lebih Variatif & Terisi */}
+      {/* 2. STATISTIC BOXES - Grid Diperbarui menjadi 6 kolom */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '0 60px' }}> 
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(5, 1fr)', 
-          gap: '25px',
-          maxWidth: '1500px',
+          gridTemplateColumns: 'repeat(6, 1fr)', 
+          gap: '20px',
+          maxWidth: '1600px',
           width: '100%',
           margin: '0 auto'
         }}>
@@ -82,12 +93,13 @@ export default function Dashboard() {
             { label: 'Arsip Keluar', val: counts.keluar, icon: '📤', color: '#10b981', bg: '#ecfdf5' },
             { label: 'Nota Dinas', val: counts.notaDinas, icon: '📝', color: '#f59e0b', bg: '#fffbeb' },
             { label: 'SK Bupati', val: counts.skBupati, icon: '🏛️', color: '#8b5cf6', bg: '#f5f3ff' },
-            { label: 'SK Kadin', val: counts.skKadin, icon: '📜', color: '#ef4444', bg: '#fef2f2' }
+            { label: 'SK Kadin', val: counts.skKadin, icon: '📜', color: '#ef4444', bg: '#fef2f2' },
+            { label: 'Kegiatan', val: counts.kegiatan, icon: '📅', color: '#0ea5e9', bg: '#f0f9ff' }
           ].map((item, i) => (
             <div key={i} style={{ 
               background: '#ffffff', 
               borderRadius: '32px', 
-              padding: '40px 20px', 
+              padding: '35px 15px', 
               textAlign: 'center', 
               border: '1px solid #e2e8f0',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
@@ -98,7 +110,7 @@ export default function Dashboard() {
               overflow: 'hidden',
               transition: 'transform 0.3s ease'
             }}>
-              {/* Decorative Background Element agar tidak kosong */}
+              {/* Decorative Background Element */}
               <div style={{ 
                 position: 'absolute', 
                 top: '-20px', 
@@ -113,10 +125,10 @@ export default function Dashboard() {
 
               {/* Icon Container */}
               <div style={{ 
-                width: '64px', height: '64px', 
-                backgroundColor: item.bg, borderRadius: '20px', 
+                width: '56px', height: '56px', 
+                backgroundColor: item.bg, borderRadius: '18px', 
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.8rem', marginBottom: '20px',
+                fontSize: '1.6rem', marginBottom: '18px',
                 color: item.color,
                 position: 'relative',
                 zIndex: 1,
@@ -127,12 +139,12 @@ export default function Dashboard() {
 
               {/* Label */}
               <h3 style={{ 
-                fontSize: '20px', 
+                fontSize: '14px', 
                 fontWeight: 800, 
                 color: '#64748b', 
                 textTransform: 'uppercase', 
-                letterSpacing: '2px', 
-                marginBottom: '10px',
+                letterSpacing: '1.5px', 
+                marginBottom: '8px',
                 position: 'relative',
                 zIndex: 1 
               }}>
@@ -141,25 +153,25 @@ export default function Dashboard() {
 
               {/* Value */}
               <p style={{ 
-                fontSize: '4rem', 
+                fontSize: '3.2rem', 
                 fontWeight: 900, 
                 color: '#1e293b', 
                 margin: 0, 
                 lineHeight: 1,
                 position: 'relative',
                 zIndex: 1,
-                letterSpacing: '-2px'
+                letterSpacing: '-1.5px'
               }}>
                 {loading ? '...' : item.val}
               </p>
 
-              {/* Progress/Indicator bar mini agar visual lebih padat */}
+              {/* Progress Bar */}
               <div style={{ 
-                width: '80%', 
+                width: '75%', 
                 height: '6px', 
                 backgroundColor: '#f1f5f9', 
                 borderRadius: '10px', 
-                marginTop: '25px',
+                marginTop: '20px',
                 overflow: 'hidden',
                 position: 'relative',
                 zIndex: 1
@@ -175,7 +187,7 @@ export default function Dashboard() {
               
               <span style={{ 
                 marginTop: '10px', 
-                fontSize: '10px', 
+                fontSize: '9px', 
                 color: '#94a3b8', 
                 fontWeight: 700,
                 textTransform: 'uppercase' 

@@ -13,6 +13,8 @@ export default function EditSuratMasuk() {
   const [asalInstansi, setAsalInstansi] = useState('')
   const [penerima, setPenerima] = useState('')
   const [perihal, setPerihal] = useState('')
+  const [disposisi, setDisposisi] = useState('') // State untuk Dropdown
+  const [keterangan, setKeterangan] = useState('') // State untuk Keterangan
   const [nomorAgenda, setNomorAgenda] = useState('') // Menggunakan 'nomor' sesuai standar sistem
   const [tanggalSurat, setTanggalSurat] = useState('')
   
@@ -49,6 +51,8 @@ export default function EditSuratMasuk() {
           setAsalInstansi(data.asal_instansi || '')
           setPenerima(data.penerima || '')
           setPerihal(data.perihal || '')
+          setDisposisi(data.disposisi || '')
+          setKeterangan(data.keterangan || '')
           setNomorAgenda(data.nomor_agenda || data.nomer_agenda || '')
           setTanggalSurat(data.tanggal_surat || '')
           setFileUrl(data.file_url || '')
@@ -88,10 +92,12 @@ export default function EditSuratMasuk() {
       const { error } = await supabase
         .from('surat_masuk')
         .update({
-          nomor_surat: nomorSurat,
+          nomer_surat: nomorSurat,
           asal_instansi: asalInstansi,
           penerima: penerima,
           perihal: perihal,
+          disposisi: disposisi,
+          keterangan: keterangan,
           nomor_agenda: nomorAgenda,
           tanggal_surat: tanggalSurat,
           file_url: fileUrl, // Update link Google Drive
@@ -128,7 +134,7 @@ export default function EditSuratMasuk() {
         <div className="flex justify-between items-center mb-10 border-b-4 border-blue-600 pb-8">
           <div className="flex items-center gap-6">
               <div className="bg-blue-600 text-white p-5 rounded-[1.5rem] text-3xl shadow-xl shadow-blue-200 font-black text-center min-w-[80px]">
-                EDIT
+                📩
               </div>
               <div>
                  <h1 className="text-5xl font-black tracking-tighter uppercase leading-none text-black">
@@ -208,14 +214,53 @@ export default function EditSuratMasuk() {
             </div>
           </div>
 
+          {/* DISPOSISI DROP DOWN */}
+          <div>
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-red-600">DISPOSISI KEPADA</label>
+            <select 
+              className="w-full p-5 bg-red-50 border-4 border-transparent focus:border-red-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black appearance-none cursor-pointer"
+              value={disposisi}
+              onChange={(e) => setDisposisi(e.target.value)}
+            >
+              <option value="">-- PILIH DISPOSISI (OPSIONAL) --</option>
+              <option value="ANANG BUDIANTARA, S.Pd.SD">ANANG BUDIANTARA, S.Pd.SD</option>
+              <option value="Drs. MUH. RINDWAN">Drs. MUH. RINDWAN</option>
+              <option value="LILIS SETYORINI">LILIS SETYORINI</option>
+              <option value="KASBIJANTO, S.H">KASBIJANTO, S.H</option>
+              <option value="NUNING FAJAR UTAMI">NUNING FAJAR UTAMI</option>
+              <option value="MOCH. EKO PURNOMO, S.Pd">MOCH. EKO PURNOMO, S.Pd</option>
+              <option value="RETNO WIDIYASRINI">RETNO WIDIYASRINI</option>
+              <option value="ANDI DWI HENDRA, A.Md">ANDI DWI HENDRA, A.Md</option>
+              <option value="SIGIT SUGIHARTO, S.T">SIGIT SUGIHARTO, S.T</option>
+              <option value="NUR LAILI ROHMATIN, S.Kom">NUR LAILI ROHMATIN, S.Kom</option>
+              <option value="MUH. MISBAH KUROHMAN, S.Pd">MUH. MISBAH KUROHMAN, S.Pd</option>
+              <option value="MUH. FAJAR SATRIYA">MUH. FAJAR SATRIYA</option>
+              <option value="APRINIA MIFTHAKHUL LAILIA,S.E">APRINIA MIFTHAKHUL LAILIA,S.E</option>
+            </select>
+          </div>
+
+          {/* PERIHAL SURAT (INPUT BIASA) */}
           <div>
             <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">PERIHAL SURAT</label>
-            <textarea 
+            <input 
+              type="text"
               required
-              rows={3}
-              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner resize-none text-black"
+              placeholder="JUDUL PERIHAL SURAT"
+              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-blue-200 transition-all shadow-inner text-black"
               value={perihal}
               onChange={(e) => setPerihal(e.target.value)}
+            />
+          </div>
+
+          {/* KETERANGAN TAMBAHAN (TEXTAREA - LEBIH BANYAK KOLOM) */}
+          <div>
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-slate-600">KETERANGAN TAMBAHAN</label>
+            <textarea 
+              placeholder="CATATAN DETAIL ATAU KETERANGAN TAMBAHAN..."
+              rows={5}
+              className="w-full p-5 bg-slate-50 border-4 border-transparent focus:border-slate-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-slate-300 transition-all shadow-inner resize-none text-black"
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
             />
           </div>
 

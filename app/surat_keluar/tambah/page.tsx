@@ -14,8 +14,8 @@ export default function TambahSuratKeluar() {
   const [perihal, setPerihal] = useState('')
   const [nomerAgenda, setNomerAgenda] = useState('') 
   const [tanggalSurat, setTanggalSurat] = useState('') 
+  const [keterangan, setKeterangan] = useState('') // STATE BARU UNTUK KETERANGAN
   
-  // Berubah menjadi String untuk menampung link URL Google Drive
   const [fileUrl, setFileUrl] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -38,6 +38,7 @@ export default function TambahSuratKeluar() {
     setNomerAgenda('')
     setTanggalSurat('')
     setFileUrl('')
+    setKeterangan('')
     setIsSuccessModalOpen(false)
   }
 
@@ -55,9 +56,11 @@ export default function TambahSuratKeluar() {
             tujuan: tujuan,
             perihal: perihal,
             pengirim: pengirim,
-            nomer_agenda: nomerAgenda,
+            nomor_agenda: nomerAgenda, // Sesuai kolom di DB: nomor_agenda
             tanggal_surat: tanggalSurat,
-            file_url: fileUrl, // Menyimpan link Google Drive
+            file_url: fileUrl,
+            keterangan: keterangan, // Menyimpan data keterangan
+            is_deleted: false, // Default status
           },
         ])
         .select()
@@ -66,7 +69,7 @@ export default function TambahSuratKeluar() {
         throw error
       }
 
-      // Membuka Modal Berhasil (Menggantikan Alert)
+      // Membuka Modal Berhasil
       setIsSuccessModalOpen(true)
       router.refresh()
       
@@ -86,7 +89,7 @@ export default function TambahSuratKeluar() {
         <div className="flex justify-between items-center mb-10 border-b-4 border-blue-600 pb-8">
           <div className="flex items-center gap-6">
              <div className="bg-blue-600 text-white p-5 rounded-[1.5rem] text-3xl shadow-xl shadow-blue-200 font-black text-center min-w-[80px]">
-               OUT
+               📤
              </div>
              <div>
                 <h1 className="text-5xl font-black tracking-tighter uppercase leading-none text-black">
@@ -100,7 +103,7 @@ export default function TambahSuratKeluar() {
           </Link>
         </div>
 
-        {/* FORM CONTAINER - Menggunakan triggerConfirmModal saat submit */}
+        {/* FORM CONTAINER */}
         <form onSubmit={triggerConfirmModal} className="bg-white rounded-[3rem] shadow-[0_40px_100px_rgba(29,78,216,0.1)] p-10 md:p-16 border-8 border-white space-y-8">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -166,19 +169,32 @@ export default function TambahSuratKeluar() {
             </div>
           </div>
 
+          {/* PERIHAL SEKARANG MENGGUNAKAN INPUT BIASA (POSISI DITUKAR) */}
           <div>
             <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">PERIHAL SURAT</label>
-            <textarea 
+            <input 
+              type="text"
               required
               placeholder="RINGKASAN PERIHAL SURAT"
-              rows={3}
-              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-blue-200 transition-all shadow-inner resize-none text-black"
+              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-blue-200 transition-all shadow-inner text-black"
               value={perihal}
               onChange={(e) => setPerihal(e.target.value)}
             />
           </div>
 
-          {/* INPUT URL GOOGLE DRIVE SEBAGAI PENGGANTI UPLOAD FILE */}
+          {/* KETERANGAN SEKARANG MENGGUNAKAN TEXTAREA (POSISI DITUKAR) */}
+          <div>
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">KETERANGAN TAMBAHAN</label>
+            <textarea 
+              placeholder="CATATAN ATAU KETERANGAN DETAIL MENGENAI SURAT"
+              rows={4}
+              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-blue-200 transition-all shadow-inner resize-none text-black"
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
+            />
+          </div>
+
+          {/* INPUT URL GOOGLE DRIVE */}
           <div className="bg-slate-900 p-8 rounded-[2rem] shadow-2xl">
             <label className="block text-sm font-black uppercase tracking-widest mb-4 text-white text-center">
               LINK GOOGLE DRIVE BERKAS DIGITAL (OPSIONAL)
@@ -209,7 +225,7 @@ export default function TambahSuratKeluar() {
         </p>
       </div>
 
-      {/* --- MODAL 1: KONFIRMASI (SEBELUM SIMPAN) --- */}
+      {/* --- MODAL 1: KONFIRMASI --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
           <div 
@@ -247,7 +263,7 @@ export default function TambahSuratKeluar() {
         </div>
       )}
 
-      {/* --- MODAL 2: NOTIFIKASI BERHASIL (DUA PILIHAN) --- */}
+      {/* --- MODAL 2: NOTIFIKASI BERHASIL --- */}
       {isSuccessModalOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-blue-900/40 backdrop-blur-md"></div>

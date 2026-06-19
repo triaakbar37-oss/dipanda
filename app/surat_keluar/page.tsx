@@ -13,7 +13,7 @@ export default function DaftarSuratKeluar() {
   const [startDate, setStartDate] = useState('') 
   const [endDate, setEndDate] = useState('')
   const [startTanggalFisik, setStartTanggalFisik] = useState('') 
-  const [endTanggalFisik, setEndTanggalFisik] = useState('')     
+  const [endTanggalFisik, setEndTanggalFisik] = useState('')      
   const [showFilters, setShowFilters] = useState(false)          
 
   // --- STATE MODAL HAPUS (POP-UP) ---
@@ -58,7 +58,8 @@ export default function DaftarSuratKeluar() {
       (item.tujuan?.toLowerCase().includes(searchLow)) ||
       (item.pengirim?.toLowerCase().includes(searchLow)) ||
       (item.perihal?.toLowerCase().includes(searchLow)) ||
-      (item.nomor_agenda?.toString().toLowerCase().includes(searchLow)) // PENYESUAIAN: Menggunakan nomor_agenda
+      (item.keterangan?.toLowerCase().includes(searchLow)) || 
+      (item.nomor_agenda?.toString().toLowerCase().includes(searchLow)) 
     )
 
     // Logika Filter Tanggal Input
@@ -85,6 +86,44 @@ export default function DaftarSuratKeluar() {
 
     return matchText && matchDateInput && matchDateFisik
   })
+
+  // --- FUNGSI DOWNLOAD CSV (EXCEL FRIENDLY) ---
+  const downloadCSV = () => {
+    if (filteredSurat.length === 0) {
+      alert("Tidak ada data untuk didownload");
+      return;
+    }
+
+    // Header Kolom
+    const headers = ["No", "Tanggal Fisik", "Tanggal Input", "Nomor Agenda", "Nomor Surat", "Tujuan", "Pengirim", "Perihal", "Keterangan"];
+    
+    // Konversi Data ke Baris CSV
+    const csvRows = filteredSurat.map((item, index) => [
+      index + 1,
+      item.tanggal_surat ? formatDate(item.tanggal_surat) : '-',
+      item.created_at ? formatDate(item.created_at) : '-',
+      `"${item.nomor_agenda || '-'}"`, // Menggunakan tanda kutip untuk menjaga format teks
+      `"${item.nomor_surat || '-'}"`,
+      `"${item.tujuan || '-'}"`,
+      `"${item.pengirim || '-'}"`,
+      `"${item.perihal?.replace(/\n/g, ' ') || '-'}"`, // Menghapus line break agar tidak merusak CSV
+      `"${item.keterangan?.replace(/\n/g, ' ') || '-'}"`
+    ]);
+
+    // Gabungkan Header dan Data dengan separator koma
+    const csvContent = [headers, ...csvRows].map(e => e.join(",")).join("\n");
+    
+    // Proses Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Data_Surat_Keluar_${new Date().toISOString().substring(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // LOGIKA PAGINATION
   const indexOfLastItem = currentPage * itemsPerPage
@@ -149,22 +188,33 @@ export default function DaftarSuratKeluar() {
         {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 border-b-4 border-blue-600 pb-8 gap-6">
           <div className="flex items-center gap-6">
-             <div className="bg-slate-900 text-white p-6 rounded-[2rem] text-5xl shadow-2xl shadow-blue-300 font-black">
+             <div className="bg-blue-600 text-white p-6 rounded-[2rem] text-5xl shadow-2xl shadow-blue-300 font-black">
                📤
              </div>
              <div>
-                <h1 className="text-7xl font-black tracking-tighter uppercase leading-none text-black">
+                <h1 className="text-6xl font-black tracking-tighter uppercase leading-none text-black">
                   SURAT <span className="text-blue-600">KELUAR</span>
                 </h1>
-                <p className="text-black font-black tracking-[0.4em] text-sm mt-2 uppercase">ARSIP SURAT KELUAR CLOUD DATABASE</p>
+                <p className="text-black font-black tracking-[0.4em] text-base mt-2 uppercase">ARSIP SURAT KELUAR CLOUD DATABASE</p>
              </div>
           </div>
-          <Link 
-            href="/surat_keluar/tambah"
-            className="bg-blue-600 hover:bg-slate-900 text-white px-12 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-blue-200 transition-all active:scale-95 uppercase tracking-widest text-lg"
-          >
-            TAMBAH SURAT BARU
-          </Link>
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+            {/* TOMBOL DOWNLOAD CSV */}
+            <button 
+              onClick={downloadCSV}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-emerald-200 transition-all active:scale-95 uppercase tracking-widest text-lg flex items-center justify-center gap-3"
+            >
+              DOWNLOAD EXCEL
+            </button>
+
+            <Link 
+              href="/surat_keluar/tambah"
+              className="bg-blue-600 hover:bg-slate-900 text-white px-12 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-blue-200 transition-all active:scale-95 uppercase tracking-widest text-lg flex items-center justify-center"
+            >
+              TAMBAH SURAT BARU
+            </Link>
+          </div>
         </div>
 
         {/* SEARCH & FILTER */}
@@ -176,12 +226,12 @@ export default function DaftarSuratKeluar() {
                 placeholder="CARI DATA SK (NOMOR, TENTANG, PEMBUAT, ATAU TANGGAL)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-8 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest"
+                className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-7 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest"
               />
               {searchTerm && (
                 <button 
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 bg-red-100 text-red-600 px-6 py-3 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-black uppercase text-xs"
+                  className="absolute right-8 top-1/2 -translate-y-1/2 bg-red-100 text-red-600 px-6 py-3 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-black uppercase text-sm"
                 >
                   ✕
                 </button>
@@ -190,7 +240,7 @@ export default function DaftarSuratKeluar() {
             
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`${showFilters ? 'bg-slate-900 text-white' : 'bg-white text-blue-600'} border-4 border-white shadow-2xl rounded-[2.5rem] px-12 py-8 text-sm font-black transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter`}
+              className={`${showFilters ? 'bg-slate-900 text-white' : 'bg-white text-blue-600'} border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-7 text-base font-black transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter`}
             >
               {showFilters ? 'TUTUP FILTER ▲' : 'FILTER TANGGAL ▼'}
             </button>
@@ -249,17 +299,17 @@ export default function DaftarSuratKeluar() {
           <div className="w-full">
             <div className="bg-white rounded-[4rem] shadow-[0_40px_100px_rgba(29,78,216,0.1)] overflow-hidden border-8 border-white">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse table-fixed">
                   <thead>
                     <tr className="bg-slate-900 text-white">
-                      <th className="px-6 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-20">NO</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center">TGL INPUT</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center">TGL FISIK</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">IDENTITAS SURAT</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">TUJUAN</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">PENGIRIM</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700">PERIHAL</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm text-center">AKSI</th>
+                      <th className="px-4 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-20">NO</th>
+                      <th className="px-6 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-40">TANGGAL</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-64">NOMER SURAT</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-56">TUJUAN</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-56">PENGIRIM</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-80">PERIHAL</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-48">KETERANGAN</th>
+                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm text-center w-56">AKSI</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y-2 divide-slate-200">
@@ -272,55 +322,64 @@ export default function DaftarSuratKeluar() {
                     ) : (
                       currentItems.map((item, index) => (
                         <tr key={item.id} className="hover:bg-blue-50/80 transition-all group">
-                          <td className="px-6 py-12 text-center border-r border-slate-100 font-black text-xl text-slate-400">
+                          <td className="px-4 py-12 text-center border-r border-slate-100 font-black text-xl text-slate-400">
                             {indexOfFirstItem + index + 1}
                           </td>
-                          <td className="px-8 py-12 text-center border-r border-slate-100">
-                            <div className="bg-slate-100 text-black p-4 rounded-2xl font-black text-base shadow-inner">
-                              {formatDate(item.created_at)}
+                          <td className="px-6 py-12 text-center border-r border-slate-100">
+                            <div className="flex flex-col gap-2">
+                                <div className="bg-blue-50 text-black p-2 rounded-xl font-black text-[11px] border border-blue-100">
+                                  <span className="text-[9px] text-blue-600 block uppercase tracking-tighter mb-1">TGL FISIK</span>
+                                  {formatDate(item.tanggal_surat)}
+                                </div>
+                                <div className="bg-slate-100 text-black p-2 rounded-xl font-black text-[11px] border border-slate-200">
+                                  <span className="text-[9px] text-slate-500 block uppercase tracking-tighter mb-1">TGL INPUT</span>
+                                  {formatDate(item.created_at)}
+                                </div>
                             </div>
                           </td>
-                          <td className="px-8 py-12 text-center border-r border-slate-100">
-                            <div className="bg-blue-50 text-black p-4 rounded-2xl font-black text-base">
-                              {formatDate(item.tanggal_surat)}
-                            </div>
-                          </td>
-                          <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-black text-2xl tracking-tighter uppercase mb-2">{item.nomor_surat || 'TANPA NOMOR'}</p>
-                            <p className="text-blue-600 font-black text-xs uppercase tracking-widest bg-blue-100/50 inline-block px-3 py-1 rounded-lg">
-                              AGENDA: {item.nomor_agenda || '-'} {/* PENYESUAIAN: nomor_agenda */}
+                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
+                            <p className="font-black text-black text-xl tracking-tighter uppercase mb-2 truncate" title={item.nomor_surat}>
+                              {item.nomor_surat || 'TANPA NOMOR'}
+                            </p>
+                            <p className="text-blue-600 font-black text-[10px] uppercase tracking-widest bg-blue-100/50 inline-block px-3 py-1 rounded-lg">
+                              AGENDA: {item.nomor_agenda || '-'} 
                             </p>
                           </td>
-                          <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-black text-lg leading-tight uppercase">{item.tujuan || '-'}</p>
+                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
+                            <p className="font-black text-black text-sm leading-tight uppercase line-clamp-2">{item.tujuan || '-'}</p>
                           </td>
-                          <td className="px-8 py-12 border-r border-slate-100">
-                            <p className="font-black text-blue-600 text-lg uppercase italic">{item.pengirim || '-'}</p>
+                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
+                            <p className="font-black text-blue-600 text-sm uppercase italic truncate">{item.pengirim || '-'}</p>
                           </td>
-                          <td className="px-8 py-12 border-r border-slate-100">
-                            <div className="max-w-[280px]">
-                               <p className="text-black font-black uppercase text-sm leading-relaxed">{item.perihal || '-'}</p>
+                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
+                            <div className="max-w-full">
+                               <p className="text-black font-black uppercase text-xs leading-relaxed line-clamp-3">{item.perihal || '-'}</p>
+                            </div>
+                          </td>
+                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
+                            <div className="max-w-full">
+                               <p className="text-slate-500 font-black uppercase text-[10px] italic leading-tight line-clamp-3">{item.keterangan || '-'}</p>
                             </div>
                           </td>
                           <td className="px-8 py-12 text-center">
-                            <div className="flex flex-col gap-3 min-w-[160px]">
+                            <div className="flex flex-col gap-2 min-w-full">
                               {item.file_url ? (
                                   <a 
                                     href={item.file_url} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="bg-blue-600 text-white py-4 rounded-2xl text-xs font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest"
+                                    className="bg-blue-600 text-white py-3 rounded-xl text-[10px] font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest"
                                   >
-                                    BUKA DRIVE ↗
+                                    LIHAT PDF ↗
                                   </a>
                               ) : (
-                                <span className="text-slate-400 text-[10px] uppercase italic">Link Tidak Tersedia</span>
+                                <span className="text-slate-400 text-[9px] uppercase italic">Link Kosong</span>
                               )}
-                              <div className="grid grid-cols-2 gap-3">
-                                <Link href={`/surat_keluar/edit/${item.id}`} className="bg-slate-200 text-black py-3 rounded-2xl text-xs font-black uppercase text-center hover:bg-blue-600 hover:text-white transition-all">
+                              <div className="grid grid-cols-2 gap-2">
+                                <Link href={`/surat_keluar/edit/${item.id}`} className="bg-slate-200 text-black py-2.5 rounded-xl text-[10px] font-black uppercase text-center hover:bg-blue-600 hover:text-white transition-all">
                                   EDIT
                                 </Link>
-                                <button onClick={() => triggerDeleteModal(item.id)} className="bg-red-100 text-red-600 py-3 rounded-2xl text-xs font-black uppercase text-center hover:bg-red-600 hover:text-white transition-all">
+                                <button onClick={() => triggerDeleteModal(item.id)} className="bg-red-100 text-red-600 py-2.5 rounded-xl text-[10px] font-black uppercase text-center hover:bg-red-600 hover:text-white transition-all">
                                   HAPUS
                                 </button>
                               </div>
@@ -387,7 +446,6 @@ export default function DaftarSuratKeluar() {
           </div>
         </div>
       )}
-
     </div>
   )
 }

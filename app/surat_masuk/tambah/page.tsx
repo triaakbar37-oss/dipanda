@@ -8,14 +8,16 @@ import { supabase } from '@/lib/supabase'
 export default function TambahSuratMasuk() {
   const router = useRouter()
   
-  // State disesuaikan dengan skema tabel Supabase
+  // State disesuaikan dengan skema tabel Supabase terbaru
   const [nomerAgenda, setNomerAgenda] = useState('') 
   const [tanggalSurat, setTanggalSurat] = useState('') 
   const [nomerSurat, setNomerSurat] = useState('')
   const [asalInstansi, setAsalInstansi] = useState('')
   const [penerima, setPenerima] = useState('')
   const [perihal, setPerihal] = useState('')
-  // Berubah menjadi String untuk menampung link Google Drive
+  const [disposisi, setDisposisi] = useState('') // State untuk Dropdown
+  const [keterangan, setKeterangan] = useState('')
+  // Link Berkas Utama (PDF/Drive)
   const [fileUrl, setFileUrl] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -37,6 +39,8 @@ export default function TambahSuratMasuk() {
     setAsalInstansi('')
     setPenerima('')
     setPerihal('')
+    setDisposisi('')
+    setKeterangan('')
     setFileUrl('')
     setIsSuccessModalOpen(false)
   }
@@ -46,18 +50,22 @@ export default function TambahSuratMasuk() {
     setLoading(true)
 
     try {
-      // PROSES SIMPAN LANGSUNG KE SUPABASE
+      // PROSES SIMPAN KE SUPABASE 
+      // Mapping field sesuai gambar {18E06B81-99BC-4B99-A72D-B9DB0F35CF82}.png
       const { data, error } = await supabase
         .from('surat_masuk')
         .insert([
           {
-            nomer_agenda: nomerAgenda,
+            nomor_agenda: nomerAgenda,
             tanggal_surat: tanggalSurat, 
             nomer_surat: nomerSurat,
             asal_instansi: asalInstansi,
             penerima: penerima,
             perihal: perihal,
+            disposisi: disposisi,
+            keterangan: keterangan,
             file_url: fileUrl, 
+            is_deleted: false 
           }
         ])
 
@@ -65,7 +73,7 @@ export default function TambahSuratMasuk() {
         throw error
       }
 
-      // Membuka Modal Berhasil (Menggantikan Alert)
+      // Membuka Modal Berhasil
       setIsSuccessModalOpen(true)
       router.refresh() 
       
@@ -85,7 +93,7 @@ export default function TambahSuratMasuk() {
         <div className="flex justify-between items-center mb-10 border-b-4 border-blue-600 pb-8">
           <div className="flex items-center gap-6">
              <div className="bg-blue-600 text-white p-5 rounded-[1.5rem] text-3xl shadow-xl shadow-blue-200 font-black">
-               IN
+               📩
              </div>
              <div>
                 <h1 className="text-5xl font-black tracking-tighter uppercase leading-none text-black">
@@ -99,7 +107,7 @@ export default function TambahSuratMasuk() {
           </Link>
         </div>
 
-        {/* FORM - Menggunakan triggerConfirmModal saat Submit */}
+        {/* FORM */}
         <form onSubmit={triggerConfirmModal} className="bg-white rounded-[3rem] shadow-[0_40px_100px_rgba(29,78,216,0.1)] p-10 md:p-16 border-8 border-white space-y-8">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -165,15 +173,54 @@ export default function TambahSuratMasuk() {
             </div>
           </div>
 
+          {/* DISPOSISI DROP DOWN */}
+          <div>
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-red-600">DISPOSISI KEPADA</label>
+            <select 
+              className="w-full p-5 bg-red-50 border-4 border-transparent focus:border-red-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black appearance-none cursor-pointer"
+              value={disposisi}
+              onChange={(e) => setDisposisi(e.target.value)}
+            >
+              <option value="">-- PILIH DISPOSISI (OPSIONAL) --</option>
+              <option value="ANANG BUDIANTARA, S.Pd.SD">ANANG BUDIANTARA, S.Pd.SD</option>
+              <option value="Drs. MUH. RINDWAN">Drs. MUH. RINDWAN</option>
+              <option value="LILIS SETYORINI">LILIS SETYORINI</option>
+              <option value="KASBIJANTO, S.H">KASBIJANTO, S.H</option>
+              <option value="NUNING FAJAR UTAMI">NUNING FAJAR UTAMI</option>
+              <option value="MOCH. EKO PURNOMO, S.Pd">MOCH. EKO PURNOMO, S.Pd</option>
+              <option value="RETNO WIDIYASRINI">RETNO WIDIYASRINI</option>
+              <option value="ANDI DWI HENDRA, A.Md">ANDI DWI HENDRA, A.Md</option>
+              <option value="SIGIT SUGIHARTO, S.T">SIGIT SUGIHARTO, S.T</option>
+              <option value="NUR LAILI ROHMATIN, S.Kom">NUR LAILI ROHMATIN, S.Kom</option>
+              <option value="MUH. MISBAH KUROHMAN, S.Pd">MUH. MISBAH KUROHMAN, S.Pd</option>
+              <option value="MUH. FAJAR SATRIYA">MUH. FAJAR SATRIYA</option>
+              <option value="APRINIA MIFTHAKHUL LAILIA,S.E">APRINIA MIFTHAKHUL LAILIA,S.E</option>
+
+            </select>
+          </div>
+
+          {/* PERIHAL (INPUT BIASA) */}
           <div>
             <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">PERIHAL SURAT</label>
-            <textarea 
+            <input 
+              type="text"
               required
-              placeholder="RINGKASAN PERIHAL SURAT"
-              rows={3}
-              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-blue-200 transition-all shadow-inner resize-none text-black"
+              placeholder="JUDUL PERIHAL SURAT"
+              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-blue-200 transition-all shadow-inner text-black"
               value={perihal}
               onChange={(e) => setPerihal(e.target.value)}
+            />
+          </div>
+
+          {/* KETERANGAN (TEXTAREA - LEBIH BANYAK KOLOM) */}
+          <div>
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-slate-600">KETERANGAN TAMBAHAN</label>
+            <textarea 
+              placeholder="CATATAN DETAIL ATAU KETERANGAN TAMBAHAN..."
+              rows={5}
+              className="w-full p-5 bg-slate-50 border-4 border-transparent focus:border-slate-600 rounded-[1.5rem] outline-none text-lg font-black placeholder:text-slate-300 transition-all shadow-inner resize-none text-black"
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
             />
           </div>
 
@@ -188,9 +235,6 @@ export default function TambahSuratMasuk() {
               onChange={(e) => setFileUrl(e.target.value)}
               className="w-full p-5 bg-slate-800 border-4 border-blue-600 rounded-[1.5rem] outline-none text-base font-bold text-blue-400 placeholder:text-slate-600 transition-all shadow-inner"
             />
-            <p className="text-[10px] text-blue-300 text-center mt-3 uppercase tracking-widest">
-              Pastikan akses link Google Drive sudah diatur ke "Siapa saja yang memiliki link"
-            </p>
           </div>
 
           <button 
@@ -207,66 +251,31 @@ export default function TambahSuratMasuk() {
         </p>
       </div>
 
-      {/* --- MODAL 1: KONFIRMASI (SEBELUM SIMPAN) --- */}
+      {/* --- MODAL 1: KONFIRMASI --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
-            onClick={() => !loading && setIsModalOpen(false)}
-          ></div>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !loading && setIsModalOpen(false)}></div>
           <div className="bg-white rounded-[3rem] p-10 shadow-2xl relative z-10 w-full max-w-lg border-8 border-white animate-in zoom-in duration-300 text-center">
             <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl font-black">?</div>
             <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter leading-none text-black">Simpan Data?</h2>
-            <p className="text-slate-500 font-bold mb-10 uppercase text-sm tracking-widest leading-relaxed">
-              Pastikan data surat masuk dan link dokumen sudah benar sebelum diunggah ke cloud database.
-            </p>
-            
             <div className="grid grid-cols-2 gap-4">
-              <button 
-                type="button"
-                disabled={loading}
-                onClick={() => setIsModalOpen(false)}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-900 py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all"
-              >
-                Batal
-              </button>
-              <button 
-                type="button"
-                disabled={loading}
-                onClick={handleSimpan}
-                className="bg-blue-600 hover:bg-slate-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all shadow-xl shadow-blue-200"
-              >
-                {loading ? 'PROSES...' : 'YA, SIMPAN'}
-              </button>
+              <button type="button" disabled={loading} onClick={() => setIsModalOpen(false)} className="bg-slate-100 text-slate-900 py-6 rounded-[2rem] font-black uppercase tracking-widest">Batal</button>
+              <button type="button" disabled={loading} onClick={handleSimpan} className="bg-blue-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest">YA, SIMPAN</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- MODAL 2: NOTIFIKASI BERHASIL (DUA PILIHAN) --- */}
+      {/* --- MODAL 2: NOTIFIKASI BERHASIL --- */}
       {isSuccessModalOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-blue-900/40 backdrop-blur-md"></div>
-          <div className="bg-white rounded-[3rem] p-10 shadow-2xl relative z-10 w-full max-w-xl border-8 border-white animate-in zoom-in duration-300 text-center">
+          <div className="bg-white rounded-[3rem] p-10 shadow-2xl relative z-10 w-full max-w-xl border-8 border-white text-center">
             <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl animate-bounce flex items-center justify-center">✓</div>
-            <h2 className="text-4xl font-black mb-2 uppercase tracking-tighter text-black">DATA TERSINKRON!</h2>
-            <p className="text-slate-500 font-bold mb-10 uppercase text-xs tracking-[0.2em] leading-relaxed">
-              Arsip surat masuk telah berhasil diamankan di Supabase Cloud. Pilih tindakan selanjutnya:
-            </p>
-            
+            <h2 className="text-4xl font-black mb-10 uppercase tracking-tighter text-black">DATA TERSINKRON!</h2>
             <div className="flex flex-col gap-4">
-              <button 
-                onClick={resetForm}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-100"
-              >
-                INPUT DATA LAGI
-              </button>
-              <button 
-                onClick={() => router.push('/surat_masuk')}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all"
-              >
-                LIHAT DAFTAR ARSIP
-              </button>
+              <button onClick={resetForm} className="w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest">INPUT DATA LAGI</button>
+              <button onClick={() => router.push('/surat_masuk')} className="w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest">LIHAT DAFTAR ARSIP</button>
             </div>
           </div>
         </div>

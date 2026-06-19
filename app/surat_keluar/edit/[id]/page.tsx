@@ -13,8 +13,9 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
   const [tujuan, setTujuan] = useState('')
   const [pengirim, setPengirim] = useState('')
   const [perihal, setPerihal] = useState('')
-  const [nomorAgenda, setNomorAgenda] = useState('') // Konsisten menggunakan 'nomor'
+  const [nomorAgenda, setNomorAgenda] = useState('') 
   const [tanggalSurat, setTanggalSurat] = useState('')
+  const [keterangan, setKeterangan] = useState('') // Tambahan state keterangan agar sama dengan form tambah
   
   // Berubah dari File ke String untuk menampung URL Google Drive
   const [fileUrl, setFileUrl] = useState('')
@@ -46,7 +47,8 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
           setPerihal(data.perihal || '')
           setNomorAgenda(data.nomor_agenda || '')
           setTanggalSurat(data.tanggal_surat || '')
-          setFileUrl(data.file_url || '') // Mengambil URL lama dari database
+          setFileUrl(data.file_url || '') 
+          setKeterangan(data.keterangan || '') // Mengambil data keterangan lama
         }
       } catch (error: any) {
         alert('Gagal mengambil data dari Supabase: ' + error.message)
@@ -87,6 +89,7 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
           nomor_agenda: nomorAgenda,
           tanggal_surat: tanggalSurat,
           file_url: fileUrl, // Update link Google Drive
+          keterangan: keterangan, // Update keterangan
         })
         .eq('id', id)
 
@@ -119,7 +122,7 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
         <div className="flex justify-between items-center mb-10 border-b-4 border-blue-600 pb-8">
           <div className="flex items-center gap-6">
               <div className="bg-blue-600 text-white p-5 rounded-[1.5rem] text-3xl shadow-xl shadow-blue-200 font-black text-center min-w-[80px]">
-                EDIT
+                📤
               </div>
               <div>
                  <h1 className="text-5xl font-black tracking-tighter uppercase leading-none text-black">
@@ -137,7 +140,7 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
           </button>
         </div>
 
-        {/* FORM CONTAINER - Menggunakan triggerConfirmModal saat submit */}
+        {/* FORM CONTAINER */}
         <form onSubmit={triggerConfirmModal} className="bg-white rounded-[3rem] shadow-[0_40px_100px_rgba(29,78,216,0.1)] p-10 md:p-16 border-8 border-white space-y-8">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -146,6 +149,7 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
               <input 
                 type="text"
                 required
+                placeholder="MASUKKAN NOMOR AGENDA"
                 className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black"
                 value={nomorAgenda}
                 onChange={(e) => setNomorAgenda(e.target.value)}
@@ -169,6 +173,7 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
             <input 
               type="text"
               required
+              placeholder="MASUKKAN NOMOR SURAT LENGKAP"
               className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black"
               value={nomorSurat}
               onChange={(e) => setNomorSurat(e.target.value)}
@@ -181,6 +186,7 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
               <input 
                 type="text"
                 required
+                placeholder="NAMA INSTANSI TUJUAN"
                 className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black"
                 value={tujuan}
                 onChange={(e) => setTujuan(e.target.value)}
@@ -192,6 +198,7 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
               <input 
                 type="text"
                 required
+                placeholder="NAMA PENGIRIM ATAU BIDANG"
                 className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black"
                 value={pengirim}
                 onChange={(e) => setPengirim(e.target.value)}
@@ -199,18 +206,32 @@ export default function EditSuratKeluar({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
+          {/* PERIHAL SEKARANG MENGGUNAKAN INPUT BIASA (POSISI DITUKAR SEPERTI FORM TAMBAH) */}
           <div>
-            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">PERIHAL SURAT / RINGKASAN</label>
-            <textarea 
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">PERIHAL SURAT</label>
+            <input 
+              type="text"
               required
-              rows={3}
-              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner resize-none text-black"
+              placeholder="RINGKASAN PERIHAL SURAT"
+              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner text-black"
               value={perihal}
               onChange={(e) => setPerihal(e.target.value)}
             />
           </div>
 
-          {/* PERUBAHAN: INPUT URL GOOGLE DRIVE BARU */}
+          {/* KETERANGAN SEKARANG MENGGUNAKAN TEXTAREA (POSISI DITUKAR SEPERTI FORM TAMBAH) */}
+          <div>
+            <label className="block text-sm font-black uppercase tracking-widest mb-3 text-blue-600">KETERANGAN TAMBAHAN</label>
+            <textarea 
+              placeholder="CATATAN ATAU KETERANGAN DETAIL MENGENAI SURAT"
+              rows={4}
+              className="w-full p-5 bg-blue-50 border-4 border-transparent focus:border-blue-600 rounded-[1.5rem] outline-none text-lg font-black transition-all shadow-inner resize-none text-black"
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
+            />
+          </div>
+
+          {/* INPUT URL GOOGLE DRIVE */}
           <div className="bg-slate-900 p-8 rounded-[2rem] shadow-2xl">
             <label className="block text-sm font-black uppercase tracking-widest mb-2 text-white text-center">LINK GOOGLE DRIVE BERKAS DIGITAL</label>
             <p className="text-blue-400 text-[10px] text-center mb-4 uppercase tracking-widest">Masukkan link baru jika ingin mengganti link sebelumnya</p>

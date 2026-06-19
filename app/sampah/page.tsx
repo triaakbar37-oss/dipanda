@@ -14,11 +14,12 @@ export default function PusatSampah() {
   const [targetRestore, setTargetRestore] = useState<{ id: any, table: string } | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // 1. AMBIL SEMUA DATA
+  // 1. AMBIL SEMUA DATA (TERMASUK TABEL KEGIATAN)
   async function fetchAllTrash() {
     setLoading(true)
     try {
-      const tables = ['surat_masuk', 'surat_keluar', 'nota_dinas', 'sk_bupati', 'sk_kadin']
+      // Menambahkan 'kegiatan' ke dalam daftar tabel yang dicek
+      const tables = ['surat_masuk', 'surat_keluar', 'nota_dinas', 'sk_bupati', 'sk_kadin', 'kegiatan']
       const requests = tables.map(table =>
         supabase.from(table).select('*').eq('is_deleted', true)
       )
@@ -47,19 +48,26 @@ export default function PusatSampah() {
     return identitas.includes(searchLow) || perihal.includes(searchLow) || jenis.includes(searchLow)
   })
 
-  // --- PENYESUAIAN KOLOM NOMOR/NOMER ---
+  // --- PENYESUAIAN KOLOM IDENTITAS ---
   function renderIdentitas(item: any) {
     if (item.origin_table === 'surat_keluar') {
-      return item.nomor_surat; // Sesuai permintaan: menggunakan 'nomor'
+      return item.nomor_surat; 
     } else if (item.origin_table === 'sk_bupati' || item.origin_table === 'sk_kadin') {
       return item.nomer_sk;
+    } else if (item.origin_table === 'kegiatan') {
+      // Berdasarkan {69256C5E-DD10-4E3B-B1B1-3E54A276855D}.png, tabel kegiatan menggunakan tgl_input sebagai identitas waktu
+      return item.tgl_input ? new Date(item.tgl_input).toLocaleDateString('id-ID') : 'TANPA TANGGAL';
     }
     return item.nomer_surat;
   }
 
+  // --- PENYESUAIAN KOLOM PERIHAL ---
   function renderPerihal(item: any) {
     if (item.origin_table === 'sk_bupati' || item.origin_table === 'sk_kadin') {
       return item.tentang_sk;
+    } else if (item.origin_table === 'kegiatan') {
+      // Berdasarkan {69256C5E-DD10-4E3B-B1B1-3E54A276855D}.png, menggunakan kolom nama_kegiatan
+      return item.nama_kegiatan;
     }
     return item.perihal;
   }
@@ -120,19 +128,19 @@ export default function PusatSampah() {
   return (
     <div className="min-h-screen bg-[#f0f7ff] p-4 md:p-8 text-black font-bold relative w-full">
 
-      {/* --- MODAL POPUP --- */}
+      {/* --- MODAL POPUP HAPUS --- */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={() => !isProcessing && setShowDeleteModal(false)}></div>
           <div className="bg-white rounded-[3.5rem] p-12 shadow-2xl relative z-10 w-full max-w-xl text-center border-8 border-white animate-in zoom-in duration-300">
             <div className="w-28 h-28 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl font-black">!</div>
-            <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter leading-none">Hapus Permanen?</h2>
+            <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter leading-none text-black">Hapus Permanen?</h2>
             <p className="text-slate-500 font-bold mb-10 uppercase text-sm tracking-widest leading-relaxed">
-              {selectedItems.length} data terpilih akan dihapus selamanya.
+              {selectedItems.length} data terpilih akan dihapus selamanya dari sistem cloud.
             </p>
             <div className="grid grid-cols-2 gap-4">
-              <button disabled={isProcessing} onClick={() => setShowDeleteModal(false)} className="bg-slate-100 py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all">Batal</button>
-              <button disabled={isProcessing} onClick={handleHardDelete} className="bg-red-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all">
+              <button disabled={isProcessing} onClick={() => setShowDeleteModal(false)} className="bg-slate-100 py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all text-black">Batal</button>
+              <button disabled={isProcessing} onClick={handleHardDelete} className="bg-red-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all shadow-lg shadow-red-200">
                 {isProcessing ? 'PROSES...' : 'YA, HAPUS'}
               </button>
             </div>
@@ -146,11 +154,11 @@ export default function PusatSampah() {
           <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={() => !isProcessing && setShowRestoreModal(false)}></div>
           <div className="bg-white rounded-[3.5rem] p-12 shadow-2xl relative z-10 w-full max-w-xl text-center border-8 border-white animate-in zoom-in duration-300">
             <div className="w-28 h-28 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl font-black">↺</div>
-            <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter leading-none">Pulihkan Data?</h2>
-            <p className="text-slate-500 font-bold mb-10 uppercase text-sm tracking-widest leading-relaxed">Data akan dikembalikan ke folder utama.</p>
+            <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter leading-none text-black">Pulihkan Data?</h2>
+            <p className="text-slate-500 font-bold mb-10 uppercase text-sm tracking-widest leading-relaxed">Data akan dikembalikan ke folder utama masing-masing.</p>
             <div className="grid grid-cols-2 gap-4">
-              <button disabled={isProcessing} onClick={() => setShowRestoreModal(false)} className="bg-slate-100 py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all">Batal</button>
-              <button disabled={isProcessing} onClick={handleRestore} className="bg-blue-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all">
+              <button disabled={isProcessing} onClick={() => setShowRestoreModal(false)} className="bg-slate-100 py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all text-black">Batal</button>
+              <button disabled={isProcessing} onClick={handleRestore} className="bg-blue-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-200">
                 {isProcessing ? 'PROSES...' : 'YA, PULIHKAN'}
               </button>
             </div>
@@ -168,7 +176,7 @@ export default function PusatSampah() {
               <h1 className="text-7xl font-black tracking-tighter uppercase leading-none text-black">
                 PUSAT <span className="text-red-600">SAMPAH</span>
               </h1>
-              <p className="text-black font-black tracking-[0.4em] text-sm mt-2 uppercase">Cloud Trash Management System</p>
+              <p className="text-black font-black tracking-[0.4em] text-sm mt-2 uppercase">Manajemen Arsip Terhapus (Terintegrasi Kegiatan)</p>
             </div>
           </div>
 
@@ -198,10 +206,10 @@ export default function PusatSampah() {
         <div className="mb-10 relative w-full">
           <input
             type="text"
-            placeholder="CARI BERDASARKAN NOMOR ATAU PERIHAL..."
+            placeholder="CARI NOMOR SURAT, NAMA KEGIATAN, ATAU JENIS ARSIP..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-8 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest"
+            className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-8 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest text-black"
           />
           <div className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-300 text-3xl italic hidden md:block">SEARCH</div>
         </div>
@@ -220,20 +228,20 @@ export default function PusatSampah() {
                       checked={filteredTrash.length > 0 && selectedItems.length === filteredTrash.length}
                     />
                   </th>
-                  <th className="p-10 border-r border-slate-800">Jenis</th>
-                  <th className="p-10 border-r border-slate-800">Identitas</th>
-                  <th className="p-10 border-r border-slate-800">Perihal</th>
+                  <th className="p-10 border-r border-slate-800">Jenis Arsip</th>
+                  <th className="p-10 border-r border-slate-800">Nomer Surat / Tgl</th>
+                  <th className="p-10 border-r border-slate-800">Perihal / Nama Kegiatan</th>
                   <th className="p-10 text-center">Tindakan</th>
                 </tr>
               </thead>
               <tbody className="divide-y-4 divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="p-32 text-center text-3xl font-black uppercase tracking-widest text-slate-300 animate-pulse">Syncing...</td>
+                    <td colSpan={5} className="p-32 text-center text-3xl font-black uppercase tracking-widest text-slate-300 animate-pulse">Syncing Cloud Data...</td>
                   </tr>
                 ) : filteredTrash.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-40 text-center text-4xl text-slate-200 font-black uppercase italic">Kosong</td>
+                    <td colSpan={5} className="p-40 text-center text-4xl text-slate-200 font-black uppercase italic">Folder Sampah Kosong</td>
                   </tr>
                 ) : (
                   filteredTrash.map((item) => {
@@ -249,7 +257,7 @@ export default function PusatSampah() {
                           />
                         </td>
                         <td className="p-10 border-r border-slate-50">
-                          <span className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest whitespace-nowrap">
+                          <span className={`${item.origin_table === 'kegiatan' ? 'bg-blue-600' : 'bg-slate-900'} text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest whitespace-nowrap`}>
                             {item.origin_table.replace('_', ' ')}
                           </span>
                         </td>
@@ -282,6 +290,10 @@ export default function PusatSampah() {
             </table>
           </div>
         </div>
+        
+        <p className="text-center mt-10 text-black font-black uppercase tracking-[0.4em] text-[10px]">
+          SISTEM KEAMANAN ARSIP DIGITAL AKTIF — 2026
+        </p>
       </div>
     </div>
   )
