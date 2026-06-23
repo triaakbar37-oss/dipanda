@@ -1,4 +1,5 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 // Import konfigurasi supabase yang telah Anda buat di folder lib
@@ -106,12 +107,13 @@ export default function DaftarSuratKeluar() {
       `"${item.nomor_surat || '-'}"`,
       `"${item.tujuan || '-'}"`,
       `"${item.pengirim || '-'}"`,
-      `"${item.perihal?.replace(/\n/g, ' ') || '-'}"`, // Menghapus line break agar tidak merusak CSV
-      `"${item.keterangan?.replace(/\n/g, ' ') || '-'}"`
+      `"${item.perihal?.replace(/\n/g, ' ').replace(/"/g, '""') || '-'}"`, // Menghapus line break dan escape double quotes
+      `"${item.keterangan?.replace(/\n/g, ' ').replace(/"/g, '""') || '-'}"`
     ]);
 
     // Gabungkan Header dan Data dengan separator koma
-    const csvContent = [headers, ...csvRows].map(e => e.join(",")).join("\n");
+    // Menambahkan BOM (Byte Order Mark) agar Excel membaca UTF-8 dengan benar (karakter spesial aman)
+    const csvContent = "\uFEFF" + [headers, ...csvRows].map(e => e.join(",")).join("\n");
     
     // Proses Download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -182,56 +184,55 @@ export default function DaftarSuratKeluar() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#f0f7ff] p-4 md:p-8 text-black w-full font-bold">
+    <div className="min-h-screen bg-[#f0f7ff] p-3 sm:p-6 text-black w-full font-bold text-xs">
       <div className="w-full mx-auto">
         
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 border-b-4 border-blue-600 pb-8 gap-6">
-          <div className="flex items-center gap-6">
-             <div className="bg-blue-600 text-white p-6 rounded-[2rem] text-5xl shadow-2xl shadow-blue-300 font-black">
+        {/* HEADER - Ukuran ikon, teks, padding, dan kelengkungan disusutkan total */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 pb-4 border-b-2 border-blue-600 gap-4">
+          <div className="flex items-center gap-3">
+             <div className="bg-blue-600 text-white p-3 rounded-xl text-2xl shadow-md font-black shrink-0">
                📤
              </div>
              <div>
-                <h1 className="text-6xl font-black tracking-tighter uppercase leading-none text-black">
+                <h1 className="text-lg sm:text-2xl font-black tracking-tight uppercase leading-none text-black">
                   SURAT <span className="text-blue-600">KELUAR</span>
                 </h1>
-                <p className="text-black font-black tracking-[0.4em] text-base mt-2 uppercase">ARSIP SURAT KELUAR CLOUD DATABASE</p>
+                <p className="text-slate-400 font-bold tracking-wider text-[9px] mt-1 uppercase">ARSIP SURAT KELUAR CLOUD DATABASE</p>
              </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            {/* TOMBOL DOWNLOAD CSV */}
+          <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
             <button 
               onClick={downloadCSV}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-emerald-200 transition-all active:scale-95 uppercase tracking-widest text-lg flex items-center justify-center gap-3"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-black shadow-sm transition-all active:scale-95 uppercase tracking-wider text-[11px] flex items-center justify-center gap-1.5"
             >
-              DOWNLOAD EXCEL
+              EXCEL
             </button>
 
             <Link 
               href="/surat_keluar/tambah"
-              className="bg-blue-600 hover:bg-slate-900 text-white px-12 py-7 rounded-[2.5rem] font-black shadow-2xl shadow-blue-200 transition-all active:scale-95 uppercase tracking-widest text-lg flex items-center justify-center"
+              className="bg-blue-600 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg font-black shadow-sm transition-all active:scale-95 uppercase tracking-wider text-[11px] flex items-center justify-center text-center"
             >
-              TAMBAH SURAT BARU
+              + BARU
             </Link>
           </div>
         </div>
 
-        {/* SEARCH & FILTER */}
-        <div className="mb-10 w-full flex flex-col gap-6">
-          <div className="flex flex-row items-center gap-6">
-            <div className="relative flex-1">
+        {/* SEARCH & FILTER CONTROLS */}
+        <div className="mb-4 w-full flex flex-col gap-2">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="relative w-full">
               <input 
                 type="text"
                 placeholder="CARI DATA SK (NOMOR, TENTANG, PEMBUAT, ATAU TANGGAL)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-7 text-xl font-black focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-widest"
+                className="w-full bg-white border border-slate-200 shadow-sm rounded-lg px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-blue-600 transition-all placeholder:text-slate-300 uppercase tracking-wide"
               />
               {searchTerm && (
                 <button 
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 bg-red-100 text-red-600 px-6 py-3 rounded-2xl hover:bg-red-600 hover:text-white transition-all font-black uppercase text-sm"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-red-50 text-red-600 px-2 py-1 rounded-md hover:bg-red-600 hover:text-white transition-all font-black uppercase text-[10px]"
                 >
                   ✕
                 </button>
@@ -240,50 +241,50 @@ export default function DaftarSuratKeluar() {
             
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`${showFilters ? 'bg-slate-900 text-white' : 'bg-white text-blue-600'} border-4 border-white shadow-2xl rounded-[2.5rem] px-10 py-7 text-base font-black transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter`}
+              className={`w-full sm:w-44 ${showFilters ? 'bg-slate-900 text-white' : 'bg-white text-blue-600'} border border-slate-200 shadow-sm rounded-lg px-4 py-2.5 text-[11px] font-black transition-all uppercase tracking-wider text-center`}
             >
-              {showFilters ? 'TUTUP FILTER ▲' : 'FILTER TANGGAL ▼'}
+              {showFilters ? 'TUTUP ▲' : 'FILTER ▼'}
             </button>
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="bg-white p-8 rounded-[3rem] shadow-xl border-4 border-blue-50">
-                  <h3 className="text-blue-600 font-black uppercase text-sm mb-4 tracking-widest flex items-center gap-2">
-                    <span className="w-3 h-3 bg-blue-600 rounded-full"></span> RENTANG TANGGAL Input
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-white rounded-xl border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="p-2 border border-slate-100 rounded-lg bg-slate-50/50">
+                  <h3 className="text-blue-600 font-black uppercase text-[10px] mb-2 tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-blue-600 rounded-full"></span> TANGGAL INPUT
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                      <input 
                        type="date"
                        value={startDate}
                        onChange={(e) => setStartDate(e.target.value)}
-                       className="bg-slate-50 p-4 rounded-2xl font-black focus:outline-none focus:ring-2 focus:ring-blue-600 uppercase"
+                       className="bg-white border border-slate-200 p-2 rounded-md font-black focus:outline-none focus:ring-1 focus:ring-blue-600 uppercase text-xs w-full"
                      />
                      <input 
                        type="date"
                        value={endDate}
                        onChange={(e) => setEndDate(e.target.value)}
-                       className="bg-slate-50 p-4 rounded-2xl font-black focus:outline-none focus:ring-2 focus:ring-blue-600 uppercase"
+                       className="bg-white border border-slate-200 p-2 rounded-md font-black focus:outline-none focus:ring-1 focus:ring-blue-600 uppercase text-xs w-full"
                      />
                   </div>
               </div>
 
-              <div className="bg-white p-8 rounded-[3rem] shadow-xl border-4 border-slate-50">
-                  <h3 className="text-slate-500 font-black uppercase text-sm mb-4 tracking-widest flex items-center gap-2">
-                    <span className="w-3 h-3 bg-slate-400 rounded-full"></span> RENTANG TANGGAL FISIK
+              <div className="p-2 border border-slate-100 rounded-lg bg-slate-50/50">
+                  <h3 className="text-slate-500 font-black uppercase text-[10px] mb-2 tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-slate-400 rounded-full"></span> TANGGAL FISIK
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                      <input 
                        type="date"
                        value={startTanggalFisik}
                        onChange={(e) => setStartTanggalFisik(e.target.value)}
-                       className="bg-slate-50 p-4 rounded-2xl font-black focus:outline-none focus:ring-2 focus:ring-slate-900 uppercase"
+                       className="bg-white border border-slate-200 p-2 rounded-md font-black focus:outline-none focus:ring-1 focus:ring-slate-900 uppercase text-xs w-full"
                      />
                      <input 
                        type="date"
                        value={endTanggalFisik}
                        onChange={(e) => setEndTanggalFisik(e.target.value)}
-                       className="bg-slate-50 p-4 rounded-2xl font-black focus:outline-none focus:ring-2 focus:ring-slate-900 uppercase"
+                       className="bg-white border border-slate-200 p-2 rounded-md font-black focus:outline-none focus:ring-1 focus:ring-slate-900 uppercase text-xs w-full"
                      />
                   </div>
               </div>
@@ -292,160 +293,256 @@ export default function DaftarSuratKeluar() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center h-96">
-            <div className="animate-spin rounded-full h-20 w-20 border-t-8 border-blue-600"></div>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
           </div>
         ) : (
           <div className="w-full">
-            <div className="bg-white rounded-[4rem] shadow-[0_40px_100px_rgba(29,78,216,0.1)] overflow-hidden border-8 border-white">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse table-fixed">
-                  <thead>
-                    <tr className="bg-slate-900 text-white">
-                      <th className="px-4 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-20">NO</th>
-                      <th className="px-6 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 text-center w-40">TANGGAL</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-64">NOMER SURAT</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-56">TUJUAN</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-56">PENGIRIM</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-80">PERIHAL</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm border-r border-slate-700 w-48">KETERANGAN</th>
-                      <th className="px-8 py-10 font-black uppercase tracking-wider text-sm text-center w-56">AKSI</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y-2 divide-slate-200">
-                    {currentItems.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="text-center py-20 text-slate-300 font-black uppercase tracking-widest italic text-2xl">
-                          DATA TIDAK DITEMUKAN
-                        </td>
-                      </tr>
-                    ) : (
-                      currentItems.map((item, index) => (
-                        <tr key={item.id} className="hover:bg-blue-50/80 transition-all group">
-                          <td className="px-4 py-12 text-center border-r border-slate-100 font-black text-xl text-slate-400">
-                            {indexOfFirstItem + index + 1}
-                          </td>
-                          <td className="px-6 py-12 text-center border-r border-slate-100">
-                            <div className="flex flex-col gap-2">
-                                <div className="bg-blue-50 text-black p-2 rounded-xl font-black text-[11px] border border-blue-100">
-                                  <span className="text-[9px] text-blue-600 block uppercase tracking-tighter mb-1">TGL FISIK</span>
-                                  {formatDate(item.tanggal_surat)}
-                                </div>
-                                <div className="bg-slate-100 text-black p-2 rounded-xl font-black text-[11px] border border-slate-200">
-                                  <span className="text-[9px] text-slate-500 block uppercase tracking-tighter mb-1">TGL INPUT</span>
-                                  {formatDate(item.created_at)}
-                                </div>
-                            </div>
-                          </td>
-                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
-                            <p className="font-black text-black text-xl tracking-tighter uppercase mb-2 truncate" title={item.nomor_surat}>
-                              {item.nomor_surat || 'TANPA NOMOR'}
-                            </p>
-                            <p className="text-blue-600 font-black text-[10px] uppercase tracking-widest bg-blue-100/50 inline-block px-3 py-1 rounded-lg">
-                              AGENDA: {item.nomor_agenda || '-'} 
-                            </p>
-                          </td>
-                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
-                            <p className="font-black text-black text-sm leading-tight uppercase line-clamp-2">{item.tujuan || '-'}</p>
-                          </td>
-                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
-                            <p className="font-black text-blue-600 text-sm uppercase italic truncate">{item.pengirim || '-'}</p>
-                          </td>
-                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
-                            <div className="max-w-full">
-                               <p className="text-black font-black uppercase text-xs leading-relaxed line-clamp-3">{item.perihal || '-'}</p>
-                            </div>
-                          </td>
-                          <td className="px-8 py-12 border-r border-slate-100 overflow-hidden">
-                            <div className="max-w-full">
-                               <p className="text-slate-500 font-black uppercase text-[10px] italic leading-tight line-clamp-3">{item.keterangan || '-'}</p>
-                            </div>
-                          </td>
-                          <td className="px-8 py-12 text-center">
-                            <div className="flex flex-col gap-2 min-w-full">
-                              {item.file_url ? (
-                                  <a 
-                                    href={item.file_url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="bg-blue-600 text-white py-3 rounded-xl text-[10px] font-black uppercase text-center shadow-lg hover:bg-slate-900 transition-all tracking-widest"
-                                  >
-                                    LIHAT PDF ↗
-                                  </a>
-                              ) : (
-                                <span className="text-slate-400 text-[9px] uppercase italic">Link Kosong</span>
-                              )}
-                              <div className="grid grid-cols-2 gap-2">
-                                <Link href={`/surat_keluar/edit/${item.id}`} className="bg-slate-200 text-black py-2.5 rounded-xl text-[10px] font-black uppercase text-center hover:bg-blue-600 hover:text-white transition-all">
-                                  EDIT
-                                </Link>
-                                <button onClick={() => triggerDeleteModal(item.id)} className="bg-red-100 text-red-600 py-2.5 rounded-xl text-[10px] font-black uppercase text-center hover:bg-red-600 hover:text-white transition-all">
-                                  HAPUS
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            
+            {/* ========================================================================= */}
+            {/* TAMPILAN 1: TAMPILAN MOBILE CARD LIST ( block md:hidden ) - PAS DI LAYAR HP */}
+            {/* ========================================================================= */}
+            <div className="block md:hidden space-y-2">
+              {currentItems.length === 0 ? (
+                <div className="bg-white rounded-xl p-8 text-center text-slate-300 font-black uppercase italic">
+                  DATA TIDAK DITEMUKAN
+                </div>
+              ) : (
+                currentItems.map((item, index) => (
+                  <div key={item.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-col gap-2">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                      <span className="text-[10px] bg-slate-100 text-slate-400 px-2 py-0.5 rounded font-mono">
+                        NO. {indexOfFirstItem + index + 1}
+                      </span>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[9px] font-black border border-blue-100">
+                          FISIK: {formatDate(item.tanggal_surat)}
+                        </span>
+                        <span className="text-slate-400 text-[8px]">
+                          INPUT: {formatDate(item.created_at)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs">
+                      <div>
+                        <p className="text-[9px] uppercase font-bold text-slate-400">Nomor Surat</p>
+                        <p className="font-black text-slate-900 break-words leading-tight">{item.nomor_surat || 'TANPA NOMOR'}</p>
+                        <span className="bg-blue-100 text-blue-800 text-[9px] px-1.5 py-0.5 rounded font-mono mt-1 inline-block">
+                          AGENDA: {item.nomor_agenda || '-'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-50">
+                        <div>
+                          <p className="text-[9px] uppercase font-bold text-slate-400">Tujuan</p>
+                          <p className="font-semibold text-slate-800 break-words">{item.tujuan || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] uppercase font-bold text-slate-400">Pengirim</p>
+                          <p className="font-bold text-blue-600 italic break-words">{item.pengirim || '-'}</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-1 border-t border-slate-50">
+                        <p className="text-[9px] uppercase font-bold text-slate-400">Perihal</p>
+                        <p className="text-slate-700 font-medium bg-slate-50 p-2 rounded-md text-[11px] leading-normal mt-0.5 break-words">
+                          {item.perihal || '-'}
+                        </p>
+                      </div>
+
+                      {item.keterangan && (
+                        <div className="pt-1">
+                          <p className="text-[9px] uppercase font-bold text-slate-400">Keterangan</p>
+                          <p className="text-slate-400 italic text-[10px] break-words">{item.keterangan}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 mt-1">
+                      {item.file_url && (
+                        <a 
+                          href={item.file_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="bg-blue-600 text-white py-2 rounded-lg text-[10px] font-black uppercase text-center tracking-wider block"
+                        >
+                          LIHAT PDF ↗
+                        </a>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        <Link href={`/surat_keluar/edit/${item.id}`} className="bg-slate-100 text-center text-black py-2 rounded-lg text-[10px] font-black uppercase">
+                          EDIT
+                        </Link>
+                        <button onClick={() => triggerDeleteModal(item.id)} className="bg-red-50 text-red-600 py-2 rounded-lg text-[10px] font-black uppercase">
+                          HAPUS
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            {/* PAGINATION */}
+            {/* ========================================================================= */}
+            {/* TAMPILAN 2: TAMPILAN TABEL LAPTOP ( hidden md:block ) - RAMPIING & MINI */}
+            {/* ========================================================================= */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+              <table className="w-full text-left border-collapse table-fixed">
+                <thead>
+                  <tr className="bg-slate-900 text-white text-[10px] tracking-wider uppercase border-b border-slate-800">
+                    <th className="p-2.5 w-[4%] text-center border-r border-slate-800">NO</th>
+                    <th className="p-2.5 w-[13%] text-center border-r border-slate-800">TANGGAL</th>
+                    <th className="p-2.5 w-[18%] border-r border-slate-800">NOMER SURAT</th>
+                    <th className="p-2.5 w-[15%] border-r border-slate-800">TUJUAN</th>
+                    <th className="p-2.5 w-[13%] border-r border-slate-800">PENGIRIM</th>
+                    <th className="p-2.5 w-[20%] border-r border-slate-800">PERIHAL</th>
+                    <th className="p-2.5 w-[11%] border-r border-slate-800">KETERANGAN</th>
+                    <th className="p-2.5 w-[11%] text-center">AKSI</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
+                  {currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-12 text-slate-300 font-black tracking-widest italic text-lg">
+                        DATA TIDAK DITEMUKAN
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-blue-50/40 transition-colors">
+                        <td className="p-2.5 text-center border-r border-slate-100 font-bold text-slate-400">
+                          {indexOfFirstItem + index + 1}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-100 text-center">
+                          <div className="flex flex-col gap-0.5 text-[10px] font-black">
+                            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 block truncate" title="Tanggal Fisik">
+                              F: {formatDate(item.tanggal_surat)}
+                            </span>
+                            <span className="text-slate-400 block text-[9px] truncate" title="Tanggal Input">
+                              In: {formatDate(item.created_at)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-2.5 border-r border-slate-100 font-black text-slate-900 break-words leading-tight">
+                          <p className="text-xs uppercase tracking-tight">{item.nomor_surat || 'TANPA NOMOR'}</p>
+                          <span className="bg-blue-100 text-blue-800 text-[8px] px-1.5 py-0.5 rounded font-mono mt-0.5 inline-block">
+                            A: {item.nomor_agenda || '-'} 
+                          </span>
+                        </td>
+                        <td className="p-2.5 border-r border-slate-100 break-words text-slate-800 font-medium leading-tight">
+                          {item.tujuan || '-'}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-100 break-words text-blue-600 italic font-bold">
+                          {item.pengirim || '-'}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-100 break-words text-slate-600 font-medium text-[11px] leading-tight">
+                          {item.perihal || '-'}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-100 break-words text-slate-400 font-normal italic text-[10px] leading-tight">
+                          {item.keterangan || '-'}
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <div className="flex flex-col gap-1 text-[9px] font-black">
+                            {item.file_url ? (
+                              <a 
+                                href={item.file_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="bg-blue-600 text-white py-1 rounded font-bold uppercase block tracking-wider"
+                              >
+                                PDF ↗
+                              </a>
+                            ) : (
+                              <span className="text-slate-300 text-[8px] italic block">No File</span>
+                            )}
+                            <div className="grid grid-cols-2 gap-1">
+                              <Link href={`/surat_keluar/edit/${item.id}`} className="bg-slate-100 text-black py-1 rounded hover:bg-blue-600 hover:text-white transition-all text-center">
+                                EDIT
+                              </Link>
+                              <button onClick={() => triggerDeleteModal(item.id)} className="bg-red-50 text-red-600 py-1 rounded hover:bg-red-600 hover:text-white transition-all">
+                                DEL
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* PAGINATION - Ukuran tombol diturunkan ke skala normal */}
             {totalPages > 1 && (
-              <div className="mt-16 flex flex-col items-center gap-8">
-                <div className="flex justify-center items-center gap-6">
-                  <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="bg-white px-8 py-5 rounded-[1.5rem] font-black shadow-xl disabled:opacity-30 hover:bg-blue-600 hover:text-white transition-all text-black text-lg border-2 border-slate-100 uppercase">Prev</button>
-                  <div className="flex gap-3 bg-white p-4 rounded-[2.5rem] shadow-2xl border-4 border-blue-50">
-                    {[...Array(totalPages)].map((_, i) => (
-                      <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-16 h-16 rounded-2xl font-black text-xl transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white scale-110 shadow-lg shadow-blue-300' : 'hover:bg-blue-50 text-black'}`}>{i + 1}</button>
-                    ))}
-                  </div>
-                  <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="bg-white px-8 py-5 rounded-[1.5rem] font-black shadow-xl disabled:opacity-30 hover:bg-blue-600 hover:text-white transition-all text-black text-lg border-2 border-slate-100 uppercase">Next</button>
+              <div className="mt-6 flex justify-center items-center gap-3 text-xs">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                  disabled={currentPage === 1} 
+                  className="bg-white px-3 py-2 rounded-lg font-bold shadow-sm disabled:opacity-30 hover:bg-blue-600 hover:text-white transition-all text-black border border-slate-200 uppercase text-[10px]"
+                >
+                  Prev
+                </button>
+                <div className="flex gap-1 bg-white p-1.5 rounded-lg shadow-sm border border-slate-200">
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setCurrentPage(i + 1)} 
+                      className={`w-7 h-7 rounded-md font-black text-xs transition-all ${currentPage === i + 1 ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-blue-50 text-black'}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
                 </div>
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                  disabled={currentPage === totalPages} 
+                  className="bg-white px-3 py-2 rounded-lg font-bold shadow-sm disabled:opacity-30 hover:bg-blue-600 hover:text-white transition-all text-black border border-slate-200 uppercase text-[10px]"
+                >
+                  Next
+                </button>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* --- POPUP MODAL DELETE (SOFT DELETE) --- */}
+      {/* --- POPUP MODAL DELETE (SOFT DELETE) - RAMPING & PAS DI HP --- */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
           <div 
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" 
             onClick={() => !isDeleting && setShowDeleteModal(false)}
           ></div>
-          <div className="bg-white rounded-[3rem] p-10 shadow-2xl relative z-10 w-full max-w-lg border-8 border-white animate-in zoom-in duration-300">
+          <div className="bg-white rounded-xl p-6 shadow-xl relative z-10 w-full max-w-sm border-2 border-white animate-in zoom-in-95 duration-200">
             <div className="text-center">
-              <div className="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl font-black">!</div>
-              <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter leading-none text-black">Pindahkan Ke Sampah?</h2>
-              <p className="text-slate-500 font-bold mb-10 uppercase text-sm tracking-widest leading-relaxed">
+              <div className="w-14 h-14 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-black">!</div>
+              <h2 className="text-lg font-black mb-2 uppercase tracking-tight text-black">Pindahkan Ke Sampah?</h2>
+              <p className="text-slate-400 font-semibold mb-6 uppercase text-[10px] tracking-wide leading-normal">
                 Data akan dipindahkan ke pusat sampah. Anda tetap bisa memulihkan data ini melalui menu sampah jika diperlukan.
               </p>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 text-[11px]">
                 <button 
                   disabled={isDeleting}
                   onClick={() => setShowDeleteModal(false)}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-900 py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-900 py-3 rounded-lg font-black uppercase tracking-wider transition-all"
                 >
                   Batal
                 </button>
                 <button 
                   disabled={isDeleting}
                   onClick={confirmSoftDelete}
-                  className="bg-red-600 hover:bg-red-700 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all shadow-xl shadow-red-200 flex items-center justify-center gap-2"
+                  className="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
                 >
-                  {isDeleting ? <div className="w-5 h-5 border-4 border-white border-t-transparent animate-spin rounded-full"></div> : 'YA, PINDAHKAN'}
+                  {isDeleting ? <div className="w-3 h-3 border-2 border-white border-t-transparent animate-spin rounded-full"></div> : 'YA, PINDAHKAN'}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
     </div>
   )
 }

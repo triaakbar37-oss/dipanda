@@ -11,178 +11,225 @@ export default function RootLayout({
 }) {
   const pathname = usePathname()
   
-  // State untuk Modal Profil Developer
+  // State untuk Modal Profil Developer & Menu Mobile Sidebar
   const [showDevInfo, setShowDevInfo] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const isActive = (path: string) => pathname === path
 
-  // Ganti alamat email di bawah ini dengan alamat Gmail asli Anda
   const gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1&to=triaakbar37@gmail.com&su=Tanya%20E-Arsip"
 
   return (
     <html lang="en">
-      <body className="flex min-h-screen bg-[#f0f7ff] text-slate-900 antialiased overflow-hidden">
+      <body className="flex flex-col md:flex-row min-h-screen bg-[#f0f7ff] text-slate-900 antialiased overflow-x-hidden">
         
-        {/* SIDEBAR - Gaya Kantor Profesional */}
-        <aside className="w-80 bg-slate-900 text-white flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.05)] relative z-20 h-screen">
+        {/* HEADER TOP NAV KHUSUS DI HP */}
+        <header className="md:hidden w-full bg-slate-900 text-white p-3 flex items-center justify-between sticky top-0 z-40 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📂</span>
+            <span className="font-black tracking-tighter uppercase text-[11px]">E-Arsip DIPANDA</span>
+          </div>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-7 h-7 flex items-center justify-center bg-slate-800 rounded-md text-sm active:scale-95 transition-all focus:outline-none"
+          >
+            {isMobileMenuOpen ? '✕' : '☰'}
+          </button>
+        </header>
+
+        {/* SIDEBAR - LEBAR DIKUNCI DI w-44 (SUPER RAMPING, TEKS AMAN & TIDAK HILANG) */}
+        <aside className={`
+          fixed inset-y-0 left-0 md:relative z-30
+          w-44 bg-slate-900 text-white flex flex-col h-screen shadow-lg
+          transition-transform duration-200 md:translate-x-0
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
           
-  <div className="p-10 mb-4">
-    <div className="flex items-center gap-3">
-      <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-500/40 shrink-0">
-        <span className="text-2xl">📂</span>
-      </div>
-      <div className="flex flex-col">
-        <span className="text-3xl font-black tracking-tighter uppercase italic text-white leading-none">
-          E-Arsip DIPANDA
-        </span>
-        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-2 leading-tight normal-case">
-          (Digitalisasi Pelayanan dan Administrasi Pendidikan Dasar)
-        </span>
-      </div>
-    </div>
-  </div>
+          {/* Header Kontainer */}
+          <div className="p-3 border-b border-slate-800/80">
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 p-1.5 rounded-lg shadow-sm shrink-0">
+                <span className="text-sm">📂</span>
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] font-black tracking-tight uppercase italic text-white truncate">
+                  E-Arsip DIPANDA
+                </span>
+                <span className="text-[6px] text-slate-400 font-bold uppercase tracking-wide truncate mt-0.5">
+                  MUTU PENDIDIKAN DASAR
+                </span>
+              </div>
+            </div>
+          </div>
           
-          <nav className="flex-1 px-6 space-y-4 overflow-y-auto pb-10 custom-scrollbar">
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Main Menu</div>
+          {/* Menu Navigasi - Jarak super rapat (space-y-0.5) & ukuran teks mini (text-[10px]) */}
+          <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto pb-4 custom-scrollbar text-[10px]">
+            <div className="text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Main Menu</div>
             
-            <Link href="/" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
-              <span className="text-xl">🏠</span> Dashboard
+            <Link 
+              href="/" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/') ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
+            >
+              <span className="text-xs shrink-0">🏠</span> <span className="truncate">Dashboard</span>
             </Link>
             
-            <div className="pt-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Manajemen Surat</div>
+            <div className="pt-2 text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Manajemen Surat</div>
             
-            <Link href="/surat_masuk" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/surat_masuk') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
-              <span className="text-xl">📩</span> Surat Masuk
+            <Link 
+              href="/surat_masuk" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/surat_masuk') ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
+            >
+              <span className="text-xs shrink-0">📩</span> <span className="truncate">Surat Masuk</span>
             </Link>
             
-            <Link href="/surat_keluar" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/surat_keluar') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
-              <span className="text-xl">📤</span> Surat Keluar
+            <Link 
+              href="/surat_keluar" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/surat_keluar') ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-slate-800 text-slate-400'}`}
+            >
+              <span className="text-xs shrink-0">📤</span> <span className="truncate">Surat Keluar</span>
             </Link>
 
-            <div className="pt-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Internal</div>
+            <div className="pt-2 text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Internal</div>
 
-            <Link href="/nota_dinas" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/nota_dinas') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
-              <span className="text-xl">📝</span> Nota Dinas
+            <Link 
+              href="/nota_dinas" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/nota_dinas') ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
+            >
+              <span className="text-xs shrink-0">📝</span> <span className="truncate">Nota Dinas</span>
             </Link>
 
-            {/* PENAMBAHAN MENU KEGIATAN */}
-            <div className="pt-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Pelaksanaan Tugas</div>
+            <div className="pt-2 text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Pelaksanaan</div>
 
-            <Link href="/kegiatan" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/kegiatan') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
-              <span className="text-xl">📅</span> Kegiatan
+            <Link 
+              href="/kegiatan" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/kegiatan') ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
+            >
+              <span className="text-xs shrink-0">📅</span> <span className="truncate">Kegiatan</span>
             </Link>
 
-            <div className="pt-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Keputusan (SK)</div>
+            <div className="pt-2 text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Keputusan (SK)</div>
 
-            <Link href="/sk_bupati" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/sk_bupati') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
-              <span className="text-xl">🏛️</span> SK Bupati
+            <Link 
+              href="/sk_bupati" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/sk_bupati') ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
+            >
+              <span className="text-xs shrink-0">🏛️</span> <span className="truncate">SK Bupati</span>
             </Link>
 
-            <Link href="/sk_kadin" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/sk_kadin') ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
-              <span className="text-xl">📜</span> SK Kadin
+            {/* KODE YANG TADI ERROR SUDAH DIPERBAIKI DI SINI (Petik penutup '/sk_kadin' sudah ada) */}
+            <Link 
+              href="/sk_kadin" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/sk_kadin') ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
+            >
+              <span className="text-xs shrink-0">📜</span> <span className="truncate">SK Kadin</span>
             </Link>
 
-            <div className="pt-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-4 mb-4">Pemeliharaan</div>
+            <div className="pt-2 text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Pemeliharaan</div>
 
-            <Link href="/sampah" className={`flex items-center gap-4 p-5 rounded-[2rem] font-black uppercase text-sm tracking-widest transition-all ${isActive('/sampah') ? 'bg-red-600 text-white shadow-xl shadow-red-900/50 translate-x-2' : 'hover:bg-slate-800 text-slate-400'}`}>
-              <span className="text-xl">🗑️</span> Pusat Sampah
+            <Link 
+              href="/sampah" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/sampah') ? 'bg-red-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
+            >
+              <span className="text-xs shrink-0">🗑️</span> <span className="truncate">Pusat Sampah</span>
             </Link>
           </nav>
 
-          {/* Tombol Tersembunyi untuk Profile Developer */}
-          <div className="p-8">
+          {/* Tombol Footer Developer Info */}
+          <div className="p-2 border-t border-slate-800/80 shrink-0">
             <button 
-              onClick={() => setShowDevInfo(true)}
-              className="w-full bg-slate-800/50 p-6 rounded-[2rem] border border-slate-700 text-center hover:bg-slate-800 transition-all active:scale-95 group"
+              onClick={() => { setShowDevInfo(true); setIsMobileMenuOpen(false); }}
+              className="w-full bg-slate-800/40 py-2 rounded-md border border-slate-700/50 text-center hover:bg-slate-800 transition-all active:scale-95 group"
             >
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">
+              <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">
                 Version 1.0
               </p>
-              <p className="text-[10px] font-bold text-blue-400 mt-1">&copy; 2026 DIGITAL ARCHIVE</p>
+              <p className="text-[7px] font-bold text-blue-400 mt-0.5">&copy; 2026 ARCHIVE</p>
             </button>
           </div>
         </aside>
 
-        {/* CONTENT UTAMA */}
-        <main className="flex-1 h-screen overflow-y-auto relative z-10">
+        {/* Lapisan Gelap di HP */}
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black/40 z-20 md:hidden backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+        )}
+
+        {/* AREA CONTENT UTAMA */}
+        <main className="flex-1 min-h-[calc(100vh-3.5rem)] md:h-screen overflow-y-auto relative z-10 w-full">
           {children}
         </main>
 
-        {/* MODAL PROFIL PENGEMBANG */}
+        {/* MODAL PROFIL DEVELOPER */}
         {showDevInfo && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 text-black">
-            {/* Overlay Backdrop */}
-            <div 
-              className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
-              onClick={() => setShowDevInfo(false)}
-            ></div>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 text-black">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowDevInfo(false)}></div>
             
-            {/* Card Modal */}
-            <div className="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-2xl relative z-10 border-8 border-white animate-in zoom-in duration-300">
+            <div className="bg-white rounded-xl p-4 max-w-[300px] w-full shadow-2xl relative z-10 border-2 border-white animate-in zoom-in-95 duration-150">
               <div className="text-center">
-                <div className="w-24 h-24 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center text-4xl shadow-xl shadow-blue-200">
+                <div className="w-11 h-11 bg-blue-600 rounded-lg mx-auto mb-2 flex items-center justify-center text-lg shadow-sm">
                   👨‍💻
                 </div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter">
+                <h2 className="text-sm font-black uppercase tracking-tight">
                   Developer <span className="text-blue-600">Profile</span>
                 </h2>
-                <div className="h-1.5 w-16 bg-blue-600 mx-auto my-4 rounded-full"></div>
+                <div className="h-0.5 w-6 bg-blue-600 mx-auto my-1.5 rounded-full"></div>
                 
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-[9px] mb-6 leading-relaxed">
-                  Aplikasi E-Arsip Bidang Peningkatan Mutu Pendidikan Dasar Dinas Pendidikan Kabupaten Bojonegoro.
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-[6.5px] mb-2.5 leading-tight">
+                  E-Arsip Bidang Peningkatan Mutu Pendidikan Dasar Dinas Pendidikan Kabupaten Bojonegoro.
                 </p>
 
-                <div className="bg-blue-50 p-6 rounded-[2rem] space-y-4 mb-6 text-left">
-                  <div className="flex justify-between items-center border-b border-blue-100 pb-2">
-                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Nama</span>
-                    <span className="text-sm font-black uppercase text-black">Detria Akbar</span>
+                <div className="bg-blue-50/60 p-2.5 rounded-lg space-y-1 mb-2.5 text-left text-[10px]">
+                  <div className="flex justify-between items-center border-b border-blue-100/40 pb-1">
+                    <span className="text-[7px] font-black text-blue-400 uppercase tracking-widest">Nama</span>
+                    <span className="font-black uppercase text-slate-800">Detria Akbar</span>
                   </div>
-                  <div className="flex justify-between items-center border-b border-blue-100 pb-2">
-                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Bidang</span>
-                    <span className="text-sm font-black uppercase text-black">Teknik Informatika</span>
+                  <div className="flex justify-between items-center border-b border-blue-100/40 pb-1">
+                    <span className="text-[7px] font-black text-blue-400 uppercase tracking-widest">Bidang</span>
+                    <span className="font-black uppercase text-slate-800">Teknik Informatika</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Status</span>
-                    <span className="text-sm font-black text-blue-600 uppercase italic">Active Dev</span>
+                    <span className="text-[7px] font-black text-blue-400 uppercase tracking-widest">Status</span>
+                    <span className="font-black text-blue-600 uppercase italic">Active Dev</span>
                   </div>
                 </div>
 
-                {/* --- KONTAK GMAIL DAN IG DENGAN LOGO ORIGINAL --- */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="grid grid-cols-2 gap-2 mb-3">
                   <a 
                     href={gmailUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex flex-col items-center gap-3 p-5 bg-white border-2 border-slate-100 rounded-3xl hover:border-red-500 hover:shadow-xl transition-all active:scale-95 group"
+                    className="flex flex-col items-center gap-1 p-2 bg-white border border-slate-100 rounded-lg text-center"
                   >
-                    <img 
-                      src="https://cdn.simpleicons.org/gmail/EA4335" 
-                      alt="Gmail Logo" 
-                      className="w-8 h-8 object-contain"
-                    />
-                    <span className="text-[9px] font-black text-slate-900 uppercase tracking-tighter italic">Buka Gmail</span>
+                    <img src="https://cdn.simpleicons.org/gmail/EA4335" alt="Gmail" className="w-3.5 h-3.5 object-contain" />
+                    <span className="text-[7px] font-black text-slate-700 uppercase">Gmail</span>
                   </a>
                   
                   <a 
                     href="https://instagram.com/dztry4" 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex flex-col items-center gap-3 p-5 bg-white border-2 border-slate-100 rounded-3xl hover:border-pink-500 hover:shadow-xl transition-all active:scale-95 group"
+                    className="flex flex-col items-center gap-1 p-2 bg-white border border-slate-100 rounded-lg text-center"
                   >
-                    <img 
-                      src="https://cdn.simpleicons.org/instagram/E4405F" 
-                      alt="Instagram Logo" 
-                      className="w-8 h-8 object-contain"
-                    />
-                    <span className="text-[9px] font-black text-slate-900 uppercase tracking-tighter">Instagram</span>
+                    <img src="https://cdn.simpleicons.org/instagram/E4405F" alt="Instagram" className="w-3.5 h-3.5 object-contain" />
+                    <span className="text-[7px] font-black text-slate-700 uppercase">Instagram</span>
                   </a>
                 </div>
 
                 <button 
                   onClick={() => setShowDevInfo(false)}
-                  className="w-full bg-blue-100 text-blue-600 font-black py-5 rounded-[1.5rem] uppercase tracking-[0.2em] text-[10px] hover:bg-blue-600 hover:text-white transition-all shadow-md active:scale-95"
+                  className="w-full bg-blue-100 hover:bg-blue-600 text-blue-600 hover:text-white font-black py-2 rounded-md uppercase tracking-wider text-[7.5px] transition-all"
                 >
-                  Tutup Informasi
+                  Tutup
                 </button>
               </div>
             </div>

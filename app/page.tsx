@@ -46,152 +46,71 @@ export default function Dashboard() {
   }, [])
 
   return (
-    <div style={{ backgroundColor: '#f8fafc', height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: '"Plus Jakarta Sans", sans-serif', overflow: 'hidden' }}>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans overflow-x-hidden text-black">
       
-      {/* 1. HEADER BANNER */}
-      <div style={{ position: 'relative', width: '100%', height: '38vh' }}>
+      {/* 1. HEADER BANNER - Tinggi dikurangi di laptop agar hemat ruang */}
+      <div className="relative w-full h-[25vh] md:h-[28vh] shrink-0">
         <img 
           src="/assets/header.png" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          className="w-full h-full object-cover block"
           alt="Banner"
         />
-        <div style={{ 
-          position: 'absolute', 
-          inset: 0, 
-          background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.95) 20%, rgba(15, 23, 42, 0.4) 100%)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          padding: '0 60px' 
-        }}>
-          <div>
-            <h1 style={{ color: '#ffffff', fontSize: '2.5rem', fontWeight: 900, margin: 0, lineHeight: '1.1', letterSpacing: '-0.03em' }}>
-              PANEL STATISTIK <br/> 
-              <span style={{ color: '#3b82f6' }}>E-ARSIP BIDANG PENINGKATAN MUTU</span> <br></br>
-              <span style={{ color: '#3b82f6' }}>PENDIDIKAN DASAR</span> <br></br>
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/40 flex items-center p-4 sm:p-6 md:p-8">
+          <div className="max-w-3xl">
+            <h1 className="text-white text-base sm:text-lg md:text-xl font-black tracking-tight uppercase leading-tight">
+              Panel Statistik <br/> 
+              <span className="text-blue-500">E-Arsip Bidang Peningkatan Mutu</span> <br/>
+              <span className="text-blue-500">Pendidikan Dasar</span>
             </h1>
-            <div style={{ width: '60px', height: '4px', backgroundColor: '#3b82f6', margin: '20px 0' }}></div>
-            <p style={{ color: '#94a3b8', fontSize: '14px', fontWeight: 500, maxWidth: '500px', lineHeight: '1.6', margin: 0 }}>
+            <div className="w-10 h-0.5 bg-blue-500 my-2"></div>
+            <p className="text-slate-400 text-[10px] md:text-[11px] font-medium max-w-xl leading-normal">
               Sistem Pemantauan Data Real-time Pengelolaan Arsip Digital Bidang Peningkatan Mutu Pendidikan Dasar Dinas Pendidikan Kabupaten Bojonegoro.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 2. STATISTIC BOXES - Grid Diperbarui menjadi 6 kolom */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '0 60px' }}> 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(6, 1fr)', 
-          gap: '20px',
-          maxWidth: '1600px',
-          width: '100%',
-          margin: '0 auto'
-        }}>
+      {/* 2. STATISTIC BOXES - Grid otomatis 2 kolom di HP, 3 di tablet, dan 6 sejajar di laptop */}
+      <div className="flex-1 flex items-center p-4 sm:p-6 md:p-8"> 
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 max-w-7xl w-full mx-auto">
           
           {[
-            { label: 'Arsip Masuk', val: counts.masuk, icon: '📥', color: '#3b82f6', bg: '#eff6ff' },
-            { label: 'Arsip Keluar', val: counts.keluar, icon: '📤', color: '#10b981', bg: '#ecfdf5' },
-            { label: 'Nota Dinas', val: counts.notaDinas, icon: '📝', color: '#f59e0b', bg: '#fffbeb' },
-            { label: 'SK Bupati', val: counts.skBupati, icon: '🏛️', color: '#8b5cf6', bg: '#f5f3ff' },
-            { label: 'SK Kadin', val: counts.skKadin, icon: '📜', color: '#ef4444', bg: '#fef2f2' },
-            { label: 'Kegiatan', val: counts.kegiatan, icon: '📅', color: '#0ea5e9', bg: '#f0f9ff' }
+            { label: 'Arsip Masuk', val: counts.masuk, icon: '📥', color: 'text-blue-600', fill: 'bg-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+            { label: 'Arsip Keluar', val: counts.keluar, icon: '📤', color: 'text-emerald-600', fill: 'bg-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+            { label: 'Nota Dinas', val: counts.notaDinas, icon: '📝', color: 'text-amber-500', fill: 'bg-amber-500', bg: 'bg-amber-50', border: 'border-amber-100' },
+            { label: 'SK Bupati', val: counts.skBupati, icon: '🏛️', color: 'text-violet-600', fill: 'bg-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
+            { label: 'SK Kadin', val: counts.skKadin, icon: '📜', color: 'text-red-500', fill: 'bg-red-500', bg: 'bg-red-50', border: 'border-red-100' },
+            { label: 'Kegiatan', val: counts.kegiatan, icon: '📅', color: 'text-sky-500', fill: 'bg-sky-500', bg: 'bg-sky-50', border: 'border-sky-100' }
           ].map((item, i) => (
-            <div key={i} style={{ 
-              background: '#ffffff', 
-              borderRadius: '32px', 
-              padding: '35px 15px', 
-              textAlign: 'center', 
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'transform 0.3s ease'
-            }}>
-              {/* Decorative Background Element */}
-              <div style={{ 
-                position: 'absolute', 
-                top: '-20px', 
-                right: '-20px', 
-                width: '100px', 
-                height: '100px', 
-                background: item.bg, 
-                borderRadius: '50%', 
-                zIndex: 0,
-                opacity: 0.5
-              }}></div>
+            <div key={i} className="bg-white rounded-xl p-3 md:p-4 text-center border border-slate-200 shadow-sm flex flex-col items-center relative overflow-hidden group">
+              
+              {/* Decorative Circle Elements */}
+              <div className={`absolute -top-6 -right-6 w-16 h-16 ${item.bg} rounded-full opacity-40 z-0`}></div>
 
-              {/* Icon Container */}
-              <div style={{ 
-                width: '56px', height: '56px', 
-                backgroundColor: item.bg, borderRadius: '18px', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.6rem', marginBottom: '18px',
-                color: item.color,
-                position: 'relative',
-                zIndex: 1,
-                boxShadow: `0 10px 15px -3px ${item.bg}`
-              }}>
+              {/* Icon Container - Diperkecil biarnya seramping layout */}
+              <div className={`w-10 h-10 ${item.bg} rounded-lg flex items-center justify-center text-base mb-2.5 ${item.color} relative z-10 shadow-inner`}>
                 {item.icon}
               </div>
 
-              {/* Label */}
-              <h3 style={{ 
-                fontSize: '14px', 
-                fontWeight: 800, 
-                color: '#64748b', 
-                textTransform: 'uppercase', 
-                letterSpacing: '1.5px', 
-                marginBottom: '8px',
-                position: 'relative',
-                zIndex: 1 
-              }}>
+              {/* Label - Ukuran font disesuaikan menjadi kompak */}
+              <h3 className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 relative z-10 truncate w-full px-1">
                 {item.label}
               </h3>
 
-              {/* Value */}
-              <p style={{ 
-                fontSize: '3.2rem', 
-                fontWeight: 900, 
-                color: '#1e293b', 
-                margin: 0, 
-                lineHeight: 1,
-                position: 'relative',
-                zIndex: 1,
-                letterSpacing: '-1.5px'
-              }}>
+              {/* Value - Ukuran disusutkan dari text-5xl ke text-2xl/3xl agar ramah di laptop */}
+              <p className="text-xl md:text-2xl lg:text-3xl font-black text-slate-800 margin-0 leading-none relative z-10 tracking-tight">
                 {loading ? '...' : item.val}
               </p>
 
               {/* Progress Bar */}
-              <div style={{ 
-                width: '75%', 
-                height: '6px', 
-                backgroundColor: '#f1f5f9', 
-                borderRadius: '10px', 
-                marginTop: '20px',
-                overflow: 'hidden',
-                position: 'relative',
-                zIndex: 1
-              }}>
-                <div style={{ 
-                  width: loading ? '0%' : '100%', 
-                  height: '100%', 
-                  backgroundColor: item.color,
-                  borderRadius: '10px',
-                  transition: 'width 1s ease-out'
-                }}></div>
+              <div className="w-4/5 h-1 bg-slate-100 rounded-full mt-3 overflow-hidden relative z-10">
+                <div 
+                  className={`h-full ${item.fill} rounded-full transition-all duration-1000`}
+                  style={{ width: loading ? '0%' : '100%' }}
+                ></div>
               </div>
               
-              <span style={{ 
-                marginTop: '10px', 
-                fontSize: '9px', 
-                color: '#94a3b8', 
-                fontWeight: 700,
-                textTransform: 'uppercase' 
-              }}>
+              <span className="mt-2 text-[7px] md:text-[8px] text-slate-400 font-bold uppercase tracking-wider">
                 Total Terdata
               </span>
             </div>
@@ -199,42 +118,44 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 3. FOOTER */}
-      <footer style={{ backgroundColor: '#0f172a', color: 'white', padding: '30px 60px 25px 60px', borderTop: '4px solid #3b82f6' }}>
-        <div style={{ maxWidth: '1500px', margin: '0 auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <tbody>
-              <tr>
-                <td style={{ width: '100px' }}>
-                  <img src="/assets/logo.png" alt="Logo" style={{ height: '85px', width: 'auto', filter: 'brightness(1.1)' }} />
-                </td>
-                <td style={{ paddingLeft: '30px', borderLeft: '2px solid rgba(59, 130, 246, 0.5)' }}>
-                  <h2 style={{ fontSize: '1.6rem', fontWeight: 900, margin: 0, textTransform: 'uppercase', letterSpacing: '-0.5px' }}>Dinas Pendidikan</h2>
-                  <p style={{ color: '#3b82f6', fontWeight: 700, margin: '2px 0', textTransform: 'uppercase', fontSize: '13px' }}>Kabupaten Bojonegoro</p>
-                  <p style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    Bidang Peningkatan Mutu Pendidikan Dasar
-                  </p>
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                  <div style={{ marginBottom: '10px' }}>
-                    <span style={{ fontSize: '9px', color: '#3b82f6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Alamat Kantor</span>
-                    <p style={{ fontSize: '12px', color: '#cbd5e1', margin: '2px 0', fontWeight: 500 }}>Jl. Pattimura No.09, Bojonegoro, Jawa Timur</p>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '9px', color: '#3b82f6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Layanan Online</span>
-                    <p style={{ fontSize: '12px', color: '#cbd5e1', margin: '2px 0', fontWeight: 500 }}>disdik.bojonegorokab.go.id</p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '25px', paddingTop: '20px', textAlign: 'center' }}>
-            <p style={{ fontSize: '9px', color: '#475569', letterSpacing: '3px', fontWeight: 800, margin: 0 }}>
-              © 2026 E-ARSIP DIGITAL — DINAS PENDIDIKAN | DESIGNED & DEVELOPED BY DETRIA AKBAR
-            </p>
+      {/* 3. FOOTER RESPONSIVE - Berubah dari susunan tabel kaku menjadi flexbox modern */}
+      <footer className="bg-slate-900 text-white p-4 md:p-6 border-t-2 border-blue-600 shrink-0">
+        <div className="max-w-7xl mx-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          
+          {/* Sisi Kiri: Identitas Logo */}
+          <div className="flex items-center gap-3">
+            <img src="/assets/logo.png" alt="Logo" className="h-12 w-auto filter brightness-110 object-contain shrink-0" />
+            <div className="pl-3 border-l border-slate-700">
+              <h2 className="text-xs md:text-sm font-black uppercase tracking-tight">Dinas Pendidikan</h2>
+              <p className="text-blue-500 font-bold uppercase text-[9px] md:text-[10px] leading-tight">Kabupaten Bojonegoro</p>
+              <p className="text-[7.5px] text-slate-500 font-semibold uppercase tracking-wider mt-0.5">
+                Bidang Peningkatan Mutu Pendidikan Dasar
+              </p>
+            </div>
           </div>
+          
+          {/* Sisi Kanan: Alamat / Kontak */}
+          <div className="flex flex-row sm:flex-col gap-x-4 gap-y-1 text-left sm:text-right text-[10px] md:text-[11px] border-t border-slate-800 pt-3 sm:pt-0 sm:border-t-0">
+            <div>
+              <span className="text-[7.5px] text-blue-400 font-black uppercase tracking-wider block">Alamat Kantor</span>
+              <p className="text-slate-300 font-medium text-[10px]">Jl. Pattimura No.09, Bojonegoro, Jawa Timur</p>
+            </div>
+            <div className="sm:mt-1">
+              <span className="text-[7.5px] text-blue-400 font-black uppercase tracking-wider block">Layanan Online</span>
+              <p className="text-slate-300 font-medium text-[10px]">disdik.bojonegorokab.go.id</p>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Hak Cipta Bawah */}
+        <div className="border-t border-slate-800/60 mt-4 pt-3 text-center">
+          <p className="text-[7px] md:text-[8px] text-slate-500 tracking-widest font-bold uppercase">
+            © 2026 E-ARSIP DIGITAL — DINAS PENDIDIKAN | DESIGNED & DEVELOPED BY DETRIA AKBAR
+          </p>
         </div>
       </footer>
+
     </div>
   )
 }
