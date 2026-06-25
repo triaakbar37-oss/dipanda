@@ -1,8 +1,9 @@
 'use client'
 import './globals.css'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export default function RootLayout({
   children,
@@ -10,22 +11,75 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   
-  // State untuk Modal Profil Developer & Menu Mobile Sidebar
+  // State untuk melacak sesi login aktif dan proses loading status
+  const [session, setSession] = useState<any>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  
+  // State UI Pendukung
   const [showDevInfo, setShowDevInfo] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const isActive = (path: string) => pathname === path
+  // 1. Jalankan Pengecekan Sesi Supabase Saat Aplikasi Dimuat
+  useEffect(() => {
+    // Ambil sesi saat ini
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setAuthLoading(false)
+    })
 
+    // Dengarkan perubahan status auth (login/logout) secara real-time
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      setAuthLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // 2. Proteksi Rute: Jika tidak ada sesi dan mencoba masuk ke area internal, tendang ke /login
+  useEffect(() => {
+    if (!authLoading && !session) {
+      const isInternalPage = pathname?.startsWith('/dashboard') || 
+                             pathname?.startsWith('/surat_masuk') || 
+                             pathname?.startsWith('/surat_keluar') || 
+                             pathname?.startsWith('/nota_dinas') || 
+                             pathname?.startsWith('/kegiatan') || 
+                             pathname?.startsWith('/sk_') || 
+                             pathname?.startsWith('/sampah')
+
+      if (isInternalPage) {
+        router.push('/login')
+      }
+    }
+  }, [session, authLoading, pathname, router])
+
+  const isActive = (path: string) => pathname === path
   const gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1&to=triaakbar37@gmail.com&su=Tanya%20E-Arsip"
 
-  // Memisahkan halaman portal publik dan halaman dashboard internal
+  // Tentukan apakah halaman termasuk kategori publik
   const isPublicPage = pathname === '/' || pathname === '/login' || pathname?.startsWith('/e-pelayanan')
 
-  if (isPublicPage) {
+  // 3. JIKA SEDANG CEK STATUS AUTH: Tampilkan loading screen polos (mencegah kebocoran layout)
+  if (authLoading) {
     return (
       <html lang="en">
-        <body className="min-h-screen bg-[#070c19] text-white antialiased">
+        <body className="min-h-screen bg-[#070c19] flex items-center justify-center text-white font-sans">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Memverifikasi Sesi...</p>
+          </div>
+        </body>
+      </html>
+    )
+  }
+
+  // 4. LAYOUT PUBLIK: Digunakan jika rute publik ATAU pengguna memang BELUM LOGIN
+  if (isPublicPage || !session) {
+    return (
+      <html lang="en">
+        <body className="min-h-screen bg-[#070c19] text-white antialiased font-sans">
           <main className="w-full min-h-screen">
             {children}
           </main>
@@ -35,10 +89,10 @@ export default function RootLayout({
     )
   }
 
-  // LAYOUT UTAMA DASHBOARD INTERNAL TERPROTEKSI (DENGAN SIDEBAR)
+  // 5. LAYOUT UTAMA DASHBOARD INTERNAL: Hanya muncul jika USER SUDAH LOGIN & BERADA DI RUTE INTERNAL
   return (
     <html lang="en">
-      <body className="flex flex-col md:flex-row min-h-screen bg-[#f0f7ff] text-slate-900 antialiased overflow-x-hidden">
+      <body className="flex flex-col md:flex-row min-h-screen bg-[#f0f7ff] text-slate-900 antialiased overflow-x-hidden font-sans">
         
         {/* HEADER TOP NAV KHUSUS DI HP */}
         <header className="md:hidden w-full bg-slate-900 text-white p-3 flex items-center justify-between sticky top-0 z-40 shadow-sm">
@@ -79,7 +133,7 @@ export default function RootLayout({
             </div>
           </div>
           
-          {/* Menu Navigasi Dashboard Baru */}
+          {/* Menu Navigasi Dashboard */}
           <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto pb-4 custom-scrollbar text-[10px]">
             <div className="text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Main Menu</div>
             
