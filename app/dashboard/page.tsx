@@ -24,14 +24,11 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        // ✅ 1. GUNAKAN getSession() yang lebih aman dan cepat untuk Client Component
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user?.email) {
           setOperatorName(session.user.email.split('@')[0].toUpperCase())
         }
 
-        // ✅ 2. AMBIL DATA SECARA INDIVIDUAL (Bukan Promise.all kaku)
-        // Ini mencegah seluruh halaman crash jika salah satu tabel kosong/belum diatur RLS-nya
         const tables = ['surat_masuk', 'surat_keluar', 'nota_dinas', 'kegiatan', 'sk_bupati', 'sk_kadin']
         const counts: { [key: string]: number } = {}
 
@@ -42,7 +39,7 @@ export default function DashboardPage() {
           
           if (error) {
             console.warn(`Gagal membaca statistik tabel [${table}]:`, error.message)
-            counts[table] = 0 // Beri nilai 0 jika error agar layout tidak rusak
+            counts[table] = 0 
           } else {
             counts[table] = count || 0
           }
@@ -76,109 +73,61 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       
-      {/* BANNER SELAMAT DATANG */}
-      <section className="bg-slate-950 border border-slate-800 text-white p-5 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="space-y-1 z-10">
-          <h1 className="text-lg md:text-xl font-black uppercase tracking-tight">
-            {getGreeting()}, <span className="text-blue-500">{operatorName}</span> 👋
+      {/* HEADER BANNER */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">
+            {getGreeting()}, <span className="text-blue-600">{operatorName}</span>
           </h1>
-          <p className="text-xs text-slate-400 max-w-xl font-medium">
-            Sistem Digital E-Arsip Bidang Peningkatan Mutu Pendidikan Dasar. Kelola, pantau, dan amankan seluruh dokumentasi surat-menyurat kedinasan di sini.
+          <p className="text-slate-500 text-sm mt-1 font-medium italic">
+            Monitor efektivitas dan kelola dokumen arsip kedinasan Anda hari ini.
           </p>
         </div>
-        <div className="text-right text-[10px] bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-400 font-bold shrink-0 z-10">
-          📅 {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        <div className="bg-slate-900 text-white px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg">
+          📅 {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
+      </header>
+
+      {/* GRID STATISTIK */}
+      <section className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard title="Surat Masuk" count={loading ? '...' : stats.suratMasuk} icon="📩" color="border-l-emerald-500" />
+        <StatCard title="Surat Keluar" count={loading ? '...' : stats.suratKeluar} icon="📤" color="border-l-blue-500" />
+        <StatCard title="Nota Dinas" count={loading ? '...' : stats.notaDinas} icon="📝" color="border-l-amber-500" />
+        <StatCard title="Agenda Kegiatan" count={loading ? '...' : stats.kegiatan} icon="📅" color="border-l-indigo-500" />
+        <StatCard title="SK Bupati" count={loading ? '...' : stats.skBupati} icon="🏛️" color="border-l-purple-500" />
+        <StatCard title="SK Kepala Dinas" count={loading ? '...' : stats.skKadin} icon="📜" color="border-l-rose-500" />
       </section>
 
-      {/* GRID STATISTIK ARSIP UTAMA */}
-      <section className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        <StatCard 
-          title="Surat Masuk" 
-          count={loading ? '...' : stats.suratMasuk} 
-          icon="📩" 
-          color="border-l-4 border-l-emerald-500"
-        />
-        <StatCard 
-          title="Surat Keluar" 
-          count={loading ? '...' : stats.suratKeluar} 
-          icon="📤" 
-          color="border-l-4 border-l-blue-500"
-        />
-        <StatCard 
-          title="Nota Dinas" 
-          count={loading ? '...' : stats.notaDinas} 
-          icon="📝" 
-          color="border-l-4 border-l-amber-500"
-        />
-        <StatCard 
-          title="Agenda Kegiatan" 
-          count={loading ? '...' : stats.kegiatan} 
-          icon="📅" 
-          color="border-l-4 border-l-indigo-500"
-        />
-        <StatCard 
-          title="SK Bupati" 
-          count={loading ? '...' : stats.skBupati} 
-          icon="🏛️" 
-          color="border-l-4 border-l-purple-500"
-        />
-        <StatCard 
-          title="SK Kepala Dinas" 
-          count={loading ? '...' : stats.skKadin} 
-          icon="📜" 
-          color="border-l-4 border-l-rose-500"
-        />
-      </section>
-
-      {/* PANEL PANDUAN PENGGUNAAN & MONITORING LOG */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex flex-col">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
-              <span>🔔</span> Log Aktivitas Terakhir
-            </h3>
-            <span className="text-[9px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-full uppercase">Sistem Aktif</span>
+      {/* PANEL INFORMASI ESTETIK */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <span className="text-[120px]">📂</span>
           </div>
-          
-          <div className="flex-1 space-y-3">
-            <div className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors text-[11px]">
-              <div className="bg-emerald-50 text-emerald-600 p-1 rounded font-bold shrink-0">➕</div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-slate-800 truncate">Surat Masuk Berhasil Diarsipkan</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Oleh Operator Bidang Dipanda</p>
-              </div>
-              <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">Baru saja</span>
-            </div>
-
-            <div className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors text-[11px]">
-              <div className="bg-blue-50 text-blue-600 p-1 rounded font-bold shrink-0">📝</div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-slate-800 truncate">Pembaruan Berkas SK Kepala Dinas</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Sinkronisasi data dokumen digital selesai</p>
-              </div>
-              <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">2 jam yang lalu</span>
-            </div>
-          </div>
+          <h3 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-4">Sistem Terintegrasi</h3>
+          <p className="text-xl font-bold leading-relaxed max-w-sm">
+            E-Arsip DIPANDA dirancang untuk mempermudah alur administrasi dengan standar keamanan tinggi dan aksesibilitas cepat.
+          </p>
         </div>
 
-        <div className="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex flex-col">
-          <div className="pb-3 border-b border-slate-100 mb-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
-              <span>💡</span> Standar Operasional
-            </h3>
-          </div>
-          <div className="text-[11px] text-slate-500 space-y-3 leading-relaxed">
-            <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-              <span className="font-bold text-slate-800 block mb-0.5">1. Format Penamaan</span>
-              Gunakan kode klasifikasi resmi dinas untuk setiap berkas PDF yang diunggah agar memudahkan pelacakan.
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Standar Operasional</h3>
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <div className="bg-blue-50 text-blue-600 font-bold p-3 rounded-lg h-fit text-sm">01</div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">Format Penamaan</p>
+                <p className="text-xs text-slate-500">Gunakan kode klasifikasi resmi untuk setiap berkas agar pencarian lebih akurat.</p>
+              </div>
             </div>
-            <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-              <span className="font-bold text-slate-800 block mb-0.5">2. Validasi Tanggal</span>
-              Pastikan tanggal surat disesuaikan dengan tanggal fisik lembar surat.
+            <div className="flex gap-4">
+              <div className="bg-blue-50 text-blue-600 font-bold p-3 rounded-lg h-fit text-sm">02</div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">Validasi Data</p>
+                <p className="text-xs text-slate-500">Pastikan tanggal fisik surat sinkron dengan entri database untuk pelacakan audit.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -189,18 +138,12 @@ export default function DashboardPage() {
 
 function StatCard({ title, count, icon, color }: StatCardProps) {
   return (
-    <div className={`bg-white border border-slate-200/80 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-200 ${color}`}>
-      <div className="space-y-1">
-        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-          {title}
-        </span>
-        <span className="text-xl md:text-2xl font-black text-slate-800 block">
-          {count}
-        </span>
+    <div className={`bg-white border border-slate-100 rounded-xl p-5 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 border-l-4 ${color}`}>
+      <div className="flex justify-between items-start mb-4">
+        <span className="text-2xl">{icon}</span>
+        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{title}</span>
       </div>
-      <div className="text-2xl bg-slate-50 p-2.5 rounded-xl border border-slate-100 shadow-inner">
-        {icon}
-      </div>
+      <span className="text-3xl font-black text-slate-900">{count}</span>
     </div>
   )
 }
