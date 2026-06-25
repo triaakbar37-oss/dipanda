@@ -57,7 +57,7 @@ export default function EPelayananPage() {
     { q: "Apa saja persyaratan Mutasi Masuk Siswa Jenjang SD/SMP Sederajat?", a: "Persyaratan meliputi: 1) Surat Rekomendasi dari Dinas Pendidikan/Kemenag, 2) Surat Pernyataan pindah dari orang tua, 3) Surat Keterangan dari asal sekolah, 4) Surat Keterangan bersedia menerima siswa baru dari sekolah tujuan, 5) Fotokopi KTP, 6) Fotokopi KK, 7) Fotokopi Akta Lahir, dan 8) Fotokopi Raport Semester Akhir." },
     { q: "Apakah mutasi bisa dilakukan jika sekolah tujuan sudah penuh?", a: "Mutasi tetap harus memperhatikan daya tampung sekolah tujuan. Apabila jumlah siswa sudah memenuhi kapasitas, sekolah dapat mempertimbangkan sesuai aturan yang berlaku." },
     { q: "Apakah siswa dari luar Kabupaten Bojonegoro bisa masuk ke sekolah di Bojonegoro?", a: "Bisa, selama memenuhi persyaratan mutasi dan mendapatkan persetujuan dari sekolah tujuan serta mengikuti prosedur administrasi yang berlaku." },
-    { q: "Apakah siswa dari Kabupaten Bojonegoro bisa pindah ke luar daerah?", a: "Bisa. Siswa dapat mengajukan mutasi keluar dengan mengikuti prosedur yang ditetapkan sekolah asal and sekolah tujuan." },
+    { q: "Apakah siswa dari Kabupaten Bojonegoro bisa pindah ke luar daerah?", a: "Bisa. Siswa dapat mengajukan mutasi keluar dengan mengikuti prosedur yang ditetapkan sekolah asal dan sekolah tujuan." },
     { q: "Bagaimana jika data siswa belum masuk di sekolah baru?", a: "Setelah proses mutasi selesai, sekolah tujuan akan melakukan pembaruan data peserta didik sesuai mekanisme pendataan yang berlaku. Orang tua/wali dapat berkoordinasi dengan sekolah tujuan." },
     { q: "Apakah mutasi siswa harus melalui Dinas Pendidikan?", a: "Tidak semua proses mutasi harus datang langsung ke Dinas Pendidikan. Umumnya proses administrasi dilakukan melalui sekolah asal dan sekolah tujuan. Dinas Pendidikan berperan dalam pelayanan, koordinasi, serta penanganan apabila terdapat kendala sesuai kewenangan." },
     { q: "Apakah siswa kelas akhir bisa melakukan mutasi?", a: "Mutasi pada kelas akhir perlu memperhatikan ketentuan yang berlaku karena berkaitan dengan administrasi kelulusan, ujian, dan pendataan peserta didik." },
@@ -93,7 +93,7 @@ export default function EPelayananPage() {
       if (error) throw error
       
       setIsModalOpen(false)
-      // Gunakan window.location.href agar halaman melakukan full reload & layout dashboard terbaca sempurna
+      // Menggunakan full reload rute agar state layout utama menangkap session dengan bersih
       window.location.href = '/dashboard'
     } catch (error: any) {
       alert('Koneksi Gagal/Kredensial Salah: ' + error.message)
@@ -102,12 +102,12 @@ export default function EPelayananPage() {
     }
   }
 
-  // JIKA SEDANG MEMERIKSA STATUS AUTH: Tampilkan blank loader agar tidak berkedip
+  // JIKA SEDANG MEMERIKSA STATUS AUTH: Loader polos yang aman dari eror TypeScript
   if (authLoading) {
     return (
-      <div style={{ ...styles.container, display: 'flex', itemsCenter: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div style={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '10px', fontWeight: 'bold', trackingWith: '0.15em', color: '#64748b', textTransform: 'uppercase' }}>
+          <p style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.15em', color: '#64748b', textTransform: 'uppercase' }}>
             Memuat Sistem Portal...
           </p>
         </div>
@@ -224,7 +224,7 @@ export default function EPelayananPage() {
       {isModalOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.card}>
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
               <h3 style={styles.modalTitle}>AUTENTIKASI OPERATOR</h3>
               <button onClick={() => setIsModalOpen(false)} style={styles.closeModalBtn}>✕</button>
             </div>
