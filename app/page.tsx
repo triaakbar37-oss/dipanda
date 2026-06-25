@@ -1,12 +1,15 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function EPelayananPage() {
   const router = useRouter()
   
-  // State untuk Fitur Portal & FAQ (Ditambahkan Kategori 'ijazah')
+  // State Proteksi Gerbang Otomatis
+  const [authLoading, setAuthLoading] = useState(true)
+  
+  // State untuk Fitur Portal & FAQ
   const [activeTab, setActiveTab] = useState<'pip' | 'mutasi' | 'ijazah'>('pip')
   const [searchQuery, setSearchQuery] = useState('')
   
@@ -16,6 +19,19 @@ export default function EPelayananPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // 0. JALUR PROTEKSI AUTOMATIC REDIRECT SETELAH LOGIN
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // Jika operator sudah login, langsung lempar ke dashboard internal
+        router.replace('/dashboard')
+      } else {
+        // Jika belum login, barulah izinkan portal publik ini dirender
+        setAuthLoading(false)
+      }
+    })
+  }, [router])
 
   // 1. DATA FAQ PIP RESMI KABUPATEN BOJONEGORO
   const pipData = [
@@ -41,7 +57,7 @@ export default function EPelayananPage() {
     { q: "Apa saja persyaratan Mutasi Masuk Siswa Jenjang SD/SMP Sederajat?", a: "Persyaratan meliputi: 1) Surat Rekomendasi dari Dinas Pendidikan/Kemenag, 2) Surat Pernyataan pindah dari orang tua, 3) Surat Keterangan dari asal sekolah, 4) Surat Keterangan bersedia menerima siswa baru dari sekolah tujuan, 5) Fotokopi KTP, 6) Fotokopi KK, 7) Fotokopi Akta Lahir, dan 8) Fotokopi Raport Semester Akhir." },
     { q: "Apakah mutasi bisa dilakukan jika sekolah tujuan sudah penuh?", a: "Mutasi tetap harus memperhatikan daya tampung sekolah tujuan. Apabila jumlah siswa sudah memenuhi kapasitas, sekolah dapat mempertimbangkan sesuai aturan yang berlaku." },
     { q: "Apakah siswa dari luar Kabupaten Bojonegoro bisa masuk ke sekolah di Bojonegoro?", a: "Bisa, selama memenuhi persyaratan mutasi dan mendapatkan persetujuan dari sekolah tujuan serta mengikuti prosedur administrasi yang berlaku." },
-    { q: "Apakah siswa dari Kabupaten Bojonegoro bisa pindah ke luar daerah?", a: "Bisa. Siswa dapat mengajukan mutasi keluar dengan mengikuti prosedur yang ditetapkan sekolah asal dan sekolah tujuan." },
+    { q: "Apakah siswa dari Kabupaten Bojonegoro bisa pindah ke luar daerah?", a: "Bisa. Siswa dapat mengajukan mutasi keluar dengan mengikuti prosedur yang ditetapkan sekolah asal and sekolah tujuan." },
     { q: "Bagaimana jika data siswa belum masuk di sekolah baru?", a: "Setelah proses mutasi selesai, sekolah tujuan akan melakukan pembaruan data peserta didik sesuai mekanisme pendataan yang berlaku. Orang tua/wali dapat berkoordinasi dengan sekolah tujuan." },
     { q: "Apakah mutasi siswa harus melalui Dinas Pendidikan?", a: "Tidak semua proses mutasi harus datang langsung ke Dinas Pendidikan. Umumnya proses administrasi dilakukan melalui sekolah asal dan sekolah tujuan. Dinas Pendidikan berperan dalam pelayanan, koordinasi, serta penanganan apabila terdapat kendala sesuai kewenangan." },
     { q: "Apakah siswa kelas akhir bisa melakukan mutasi?", a: "Mutasi pada kelas akhir perlu memperhatikan ketentuan yang berlaku karena berkaitan dengan administrasi kelulusan, ujian, dan pendataan peserta didik." },
@@ -54,7 +70,7 @@ export default function EPelayananPage() {
     { q: "Apa yang harus dilakukan pertama kali jika ijazah hilang atau rusak?", a: "Pemilik ijazah dapat melakukan pengurusan dokumen pengganti melalui sekolah yang menerbitkan ijazah tersebut. Langkah awal yang dilakukan: 1) Melapor kepada pihak sekolah asal/penerbit ijazah, 2) Menyiapkan dokumen pendukung, 3) Mengikuti proses verifikasi data oleh sekolah, dan 4) Mengajukan penerbitan dokumen pengganti sesuai prosedur." },
     { q: "Apakah ijazah bisa diperbaiki langsung di Dinas Pendidikan?", a: "Perbaikan ijazah tidak langsung dilakukan oleh Dinas Pendidikan. Proses awal dilakukan melalui sekolah penerbit karena sekolah memiliki data dan dokumen pendukung peserta didik." },
     { q: "Bagaimana jika sekolah sudah tidak beroperasi atau berganti nama?", a: "Apabila sekolah sudah tidak beroperasi, peserta didik dapat melakukan konsultasi dengan Dinas Pendidikan untuk mendapatkan informasi terkait penyelesaian administrasi ijazah sesuai ketentuan yang berlaku." },
-    { q: "Apakah ijazah boleh diambil oleh orang lain?", a: "Pengambilan ijazah dapat dilakukan oleh orang yang diberi kewenangan sesuai ketentuan sekolah. Biasanya diperlukan identitas asli penerima kuas dan bukti hubungan dengan peserta didik." },
+    { q: "Apakah ijazah boleh diambil oleh orang lain?", a: "Pengambilan ijazah dapat dilakukan oleh orang yang diberi kewenangan sesuai ketentuan sekolah. Biasanya diperlukan identitas asli penerima kuasa dan bukti hubungan dengan peserta didik." },
     { q: "Apakah surat keterangan lulus bisa menggantikan ijazah?", a: "Surat Keterangan Lulus (SKL) dapat digunakan sementara untuk kebutuhan tertentu sebelum ijazah diterbitkan atau diterima, sesuai dengan kebijakan lembaga yang membutuhkan dokumen tersebut." },
     { q: "Bagaimana jika nama di ijazah berbeda dengan Kartu Keluarga atau KTP?", a: "Segera lakukan pengecekan dan konsultasi kepada sekolah penerbit ijazah. Perbedaan data perlu diselesaikan melalui proses verifikasi dokumen pendukung." },
     { q: "Apakah ijazah boleh dilaminasi?", a: "Sebaiknya tidak melakukan perubahan fisik pada ijazah seperti laminasi, karena dapat memengaruhi keaslian dan kondisi dokumen apabila diperlukan pemeriksaan hukum." },
@@ -77,13 +93,26 @@ export default function EPelayananPage() {
       if (error) throw error
       
       setIsModalOpen(false)
-      alert("Login Berhasil! Mengalihkan ke sistem E-Arsip...")
-      router.push('/dashboard')
+      // Gunakan window.location.href agar halaman melakukan full reload & layout dashboard terbaca sempurna
+      window.location.href = '/dashboard'
     } catch (error: any) {
       alert('Koneksi Gagal/Kredensial Salah: ' + error.message)
     } finally {
       setLoading(false)
     }
+  }
+
+  // JIKA SEDANG MEMERIKSA STATUS AUTH: Tampilkan blank loader agar tidak berkedip
+  if (authLoading) {
+    return (
+      <div style={{ ...styles.container, display: 'flex', itemsCenter: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: '10px', fontWeight: 'bold', trackingWith: '0.15em', color: '#64748b', textTransform: 'uppercase' }}>
+            Memuat Sistem Portal...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
