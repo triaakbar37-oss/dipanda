@@ -1,10 +1,8 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -22,13 +20,13 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      // MENGARAHKAN LANGSUNG KE DASHBOARD UTAMA YANG BARU
-      router.push('/dashboard')
-      router.refresh()
+      // SOLUSI UTAMA: Menggunakan window.location.href agar state RootLayout 
+      // diperbarui total dan langsung diarahkan ke halaman dashboard internal
+      window.location.href = '/dashboard'
+      
     } catch (error: any) {
       alert('Gagal Login: ' + error.message)
-    } finally {
-      loading && setLoading(false)
+      setLoading(false)
     }
   }
 
@@ -62,6 +60,7 @@ export default function LoginPage() {
             <input
               type="email"
               required
+              disabled={loading}
               placeholder="admin@dipanda.com"
               style={styles.input}
               value={email}
@@ -75,6 +74,7 @@ export default function LoginPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                disabled={loading}
                 placeholder="••••••••"
                 style={{ ...styles.input, paddingRight: '42px', width: '100%' }}
                 value={password}
@@ -84,6 +84,7 @@ export default function LoginPage() {
               {/* Tombol Lihat Password Menggunakan Icon Mata Elegan */}
               <button
                 type="button"
+                disabled={loading}
                 onClick={() => setShowPassword(!showPassword)}
                 style={styles.toggleButton}
                 tabIndex={-1}
