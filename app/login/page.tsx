@@ -22,12 +22,13 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      router.push('/')
+      // MENGARAHKAN LANGSUNG KE DASHBOARD UTAMA YANG BARU
+      router.push('/dashboard')
       router.refresh()
     } catch (error: any) {
       alert('Gagal Login: ' + error.message)
     } finally {
-      setLoading(false)
+      loading && setLoading(false)
     }
   }
 
@@ -251,7 +252,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: '#94a3b8', // Slate abu-abu bawaan
+    color: '#94a3b8',
     padding: 0,
     display: 'flex',
     alignItems: 'center',
