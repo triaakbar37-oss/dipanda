@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase'
 export default function EPelayananPage() {
   const router = useRouter()
   
-  // State Proteksi Gerbang Otomatis
-  const [authLoading, setAuthLoading] = useState(true)
+  // Perbaikan 1: Setel default ke false agar portal publik langsung terbuka instan tanpa delay
+  const [authLoading, setAuthLoading] = useState(false)
   
   // State untuk Fitur Portal & FAQ
   const [activeTab, setActiveTab] = useState<'pip' | 'mutasi' | 'ijazah'>('pip')
@@ -20,17 +20,23 @@ export default function EPelayananPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // 0. JALUR PROTEKSI AUTOMATIC REDIRECT SETELAH LOGIN
+  // Perbaikan 2: Lakukan pengecekan sesi di latar belakang (background check) tanpa mengunci UI publik
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // Jika operator sudah login, langsung lempar ke dashboard internal
-        router.replace('/dashboard')
-      } else {
-        // Jika belum login, barulah izinkan portal publik ini dirender
-        setAuthLoading(false)
+    // Jalankan pengecekan sesi secara asinkronus
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          // Jika operator terdeteksi sudah login, kunci layar sebentar lalu lempar ke dashboard
+          setAuthLoading(true)
+          router.replace('/dashboard')
+        }
+      } catch (error) {
+        console.error("Auth check error:", error)
       }
-    })
+    }
+
+    checkSession()
   }, [router])
 
   // 1. DATA FAQ PIP RESMI KABUPATEN BOJONEGORO
@@ -93,7 +99,6 @@ export default function EPelayananPage() {
       if (error) throw error
       
       setIsModalOpen(false)
-      // Menggunakan full reload rute agar state layout utama menangkap session dengan bersih
       window.location.href = '/dashboard'
     } catch (error: any) {
       alert('Koneksi Gagal/Kredensial Salah: ' + error.message)
@@ -102,13 +107,13 @@ export default function EPelayananPage() {
     }
   }
 
-  // JIKA SEDANG MEMERIKSA STATUS AUTH: Loader polos yang aman dari eror TypeScript
+  // Hanya memblokir layar jika proses pengalihan rute ke /dashboard sedang berjalan
   if (authLoading) {
     return (
       <div style={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.15em', color: '#64748b', textTransform: 'uppercase' }}>
-            Memuat Sistem Portal...
+            Mengalihkan ke Dashboard Internal...
           </p>
         </div>
       </div>
