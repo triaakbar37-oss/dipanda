@@ -23,37 +23,18 @@ export default function RootLayout({
 
   // 1. Jalankan Pengecekan Sesi Supabase Saat Aplikasi Dimuat
   useEffect(() => {
-    // Ambil sesi saat ini
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setAuthLoading(false)
     })
 
-    // Dengarkan perubahan status auth (login/logout) secara real-time
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession)
       setAuthLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
-
-  // 2. Proteksi Rute: Jika tidak ada sesi dan mencoba masuk ke area internal, tendang ke /login
-  useEffect(() => {
-    if (!authLoading && !session) {
-      const isInternalPage = pathname?.startsWith('/dashboard') || 
-                             pathname?.startsWith('/surat_masuk') || 
-                             pathname?.startsWith('/surat_keluar') || 
-                             pathname?.startsWith('/nota_dinas') || 
-                             pathname?.startsWith('/kegiatan') || 
-                             pathname?.startsWith('/sk_') || 
-                             pathname?.startsWith('/sampah')
-
-      if (isInternalPage) {
-        router.push('/login')
-      }
-    }
-  }, [session, authLoading, pathname, router])
 
   const isActive = (path: string) => pathname === path
   const gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1&to=triaakbar37@gmail.com&su=Tanya%20E-Arsip"
@@ -61,7 +42,7 @@ export default function RootLayout({
   // Tentukan apakah halaman termasuk kategori publik
   const isPublicPage = pathname === '/' || pathname === '/login' || pathname?.startsWith('/e-pelayanan')
 
-  // 3. JIKA SEDANG CEK STATUS AUTH: Tampilkan loading screen polos (mencegah kebocoran layout)
+  // 2. JIKA SEDANG CEK STATUS AUTH: Tampilkan loading screen polos
   if (authLoading) {
     return (
       <html lang="en">
@@ -75,7 +56,7 @@ export default function RootLayout({
     )
   }
 
-  // 4. LAYOUT PUBLIK: Digunakan jika rute publik ATAU pengguna memang BELUM LOGIN
+  // 3. LAYOUT PUBLIK: Digunakan jika rute publik ATAU pengguna memang BELUM LOGIN
   if (isPublicPage || !session) {
     return (
       <html lang="en">
@@ -89,7 +70,7 @@ export default function RootLayout({
     )
   }
 
-  // 5. LAYOUT UTAMA DASHBOARD INTERNAL: Hanya muncul jika USER SUDAH LOGIN & BERADA DI RUTE INTERNAL
+  // 4. LAYOUT UTAMA INTERNAL (DASHBOARD): Muncul jika USER LOGIN & DI RUTE INTERNAL
   return (
     <html lang="en">
       <body className="flex flex-col md:flex-row min-h-screen bg-[#f0f7ff] text-slate-900 antialiased overflow-x-hidden font-sans">
@@ -116,7 +97,6 @@ export default function RootLayout({
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
           
-          {/* Header Kontainer */}
           <div className="p-3 border-b border-slate-800/80">
             <div className="flex items-center gap-2">
               <div className="bg-blue-600 p-1.5 rounded-lg shadow-sm shrink-0">
@@ -133,10 +113,10 @@ export default function RootLayout({
             </div>
           </div>
           
-          {/* Menu Navigasi Dashboard */}
           <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto pb-4 custom-scrollbar text-[10px]">
             <div className="text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Main Menu</div>
             
+            {/* Navigasi Diubah ke /dashboard */}
             <Link 
               href="/dashboard" 
               onClick={() => setIsMobileMenuOpen(false)}
@@ -211,7 +191,6 @@ export default function RootLayout({
               <span className="text-xs shrink-0">🗑️</span> <span className="truncate">Pusat Sampah</span>
             </Link>
 
-            {/* KEMBALI KE PORTAL UTAMA */}
             <div className="pt-2 border-t border-slate-800/50 mt-2">
               <Link 
                 href="/" 
@@ -223,7 +202,6 @@ export default function RootLayout({
             </div>
           </nav>
 
-          {/* Tombol Footer Developer Info */}
           <div className="p-2 border-t border-slate-800/80 shrink-0">
             <button 
               onClick={() => { setShowDevInfo(true); setIsMobileMenuOpen(false); }}
@@ -237,7 +215,6 @@ export default function RootLayout({
           </div>
         </aside>
 
-        {/* Lapisan Gelap di HP saat Sidebar terbuka */}
         {isMobileMenuOpen && (
           <div 
             className="fixed inset-0 bg-black/40 z-20 md:hidden backdrop-blur-sm"
@@ -245,7 +222,7 @@ export default function RootLayout({
           ></div>
         )}
 
-        {/* AREA KONTEN UTAMA DASHBOARD */}
+        {/* AREA KONTEN UTAMA */}
         <main className="flex-1 min-h-[calc(100vh-3.5rem)] md:h-screen overflow-y-auto relative z-10 w-full bg-[#f8fafc]">
           {children}
         </main>
@@ -285,31 +262,17 @@ export default function RootLayout({
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <a 
-                    href={gmailUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center gap-1 p-2 bg-white border border-slate-100 rounded-lg text-center"
-                  >
+                  <a href={gmailUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 bg-white border border-slate-100 rounded-lg text-center">
                     <img src="https://cdn.simpleicons.org/gmail/EA4335" alt="Gmail" className="w-3.5 h-3.5 object-contain" />
                     <span className="text-[7px] font-black text-slate-700 uppercase">Gmail</span>
                   </a>
-                  
-                  <a 
-                    href="https://instagram.com/dztry4" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center gap-1 p-2 bg-white border border-slate-100 rounded-lg text-center"
-                  >
+                  <a href="https://instagram.com/dztry4" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 bg-white border border-slate-100 rounded-lg text-center">
                     <img src="https://cdn.simpleicons.org/instagram/E4405F" alt="Instagram" className="w-3.5 h-3.5 object-contain" />
                     <span className="text-[7px] font-black text-slate-700 uppercase">Instagram</span>
                   </a>
                 </div>
 
-                <button 
-                  onClick={() => setShowDevInfo(false)}
-                  className="w-full bg-blue-100 hover:bg-blue-600 text-blue-600 hover:text-white font-black py-2 rounded-md uppercase tracking-wider text-[7.5px] transition-all"
-                >
+                <button onClick={() => setShowDevInfo(false)} className="w-full bg-blue-100 hover:bg-blue-600 text-blue-600 hover:text-white font-black py-2 rounded-md uppercase tracking-wider text-[7.5px] transition-all">
                   Tutup
                 </button>
               </div>
@@ -318,7 +281,6 @@ export default function RootLayout({
         )}
 
         <div id="modal-root"></div>
-
       </body>
     </html>
   )

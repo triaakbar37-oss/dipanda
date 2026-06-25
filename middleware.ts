@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -9,59 +9,61 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  // Inisialisasi Supabase Client Khusus untuk Middleware
+  // Inisialisasi Supabase Server Client untuk mengelola kuki sesi secara dinamis
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll().map((cookie) => ({
-            name: cookie.name,
-            value: cookie.value,
-          }))
+        get(name: string) {
+          return request.cookies.get(name)?.value
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set({ name, value, ...options })
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            })
-            response.cookies.set({ name, value, ...options })
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({ name, value, ...options })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
           })
+          response.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({ name, value: '', ...options })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({ name, value: '', ...options })
         },
       },
     }
   )
 
-  // Mengambil data sesi user aktif dari Supabase Auth
-  const { data: { user } } = await supabase.auth.getUser()
+  // Menggunakan getSession agar pembacaan token kuki lebih aman dari konflik rute lama
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
 
   const url = request.nextUrl.clone()
 
-  // --- LOGIKA PENGALIHAN RUTE (ROUTING) ---
-
-  // 1. JIKA USER BELUM LOGIN:
-  // Hanya kunci halaman yang berada di dalam folder '/dashboard'
-  if (!user && url.pathname.startsWith('/dashboard')) {
-    url.pathname = '/' // Lempar balik ke portal utama E-Pelayanan
+  // 1. JIKA OPERATOR BELUM LOGIN dan mencoba mengakses halaman monitoring internal
+  if (!user && url.pathname.startsWith('/monitoring')) {
+    url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // 2. JIKA USER SUDAH LOGIN:
-  // Jika mereka berada di halaman utama ('/') atau mencoba mengakses '/login',
-  // langsung alihkan ke dalam dashboard internal agar bisa bekerja
-  if (user && (url.pathname === '/' || url.pathname.startsWith('/login'))) {
-    url.pathname = '/dashboard'
+  // 2. JIKA OPERATOR SUDAH LOGIN dan mencoba kembali ke halaman login/akar
+  if (user && (url.pathname === '/login' || url.pathname === '/')) {
+    url.pathname = '/monitoring'
     return NextResponse.redirect(url)
   }
 
   return response
 }
 
-// Konfigurasi pencocokan rute agar asset statis tidak ikut tersaring
+// Proteksi rute-rute internal secara spesifik
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

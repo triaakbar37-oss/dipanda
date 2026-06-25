@@ -1,12 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function EPelayananPage() {
   const router = useRouter()
   
-  // State loader hanya aktif jika sistem BENAR-BENAR mendeteksi sesi aktif dan siap pindah halaman
+  // State loader hanya aktif jika operator berhasil login dan bersiap dipindahkan
   const [isRedirecting, setIsRedirecting] = useState(false)
   
   // State untuk Fitur Portal & FAQ
@@ -20,30 +20,7 @@ export default function EPelayananPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // FILTER PENGAMAN GERBANG UTAMA (BACKGROUND SESSION CHECK)
-  useEffect(() => {
-    const checkUserSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) {
-          console.error("Supabase session error:", error.message)
-          return
-        }
-        
-        if (session) {
-          // Jika ada sesi aktif, langsung alihkan menggunakan native window location (jauh lebih aman dari cache router)
-          setIsRedirecting(true)
-          window.location.href = '/dashboard'
-        }
-      } catch (err) {
-        console.error("Gagal memeriksa sesi auth:", err)
-      }
-    }
-
-    checkUserSession()
-  }, [])
-
-  // 1. DATA FAQ PIP RESMI KABUPATEN BOJONEGORO
+  // DATA FAQ PIP RESMI KABUPATEN BOJONEGORO
   const pipData = [
     { q: "Apa yang dimaksud dengan Program Indonesia Pintar (PIP)?", a: "Program Indonesia Pintar (PIP) merupakan salah satu program bantuan dari pemerintah yang diberikan kepada peserta didik yang membutuhkan dukungan biaya pendidikan. Bantuan ini bertujuan untuk membantu siswa agar tetap dapat melanjutkan pendidikan dan mengurangi risiko putus sekolah karena kendala ekonomi." },
     { q: "Siapa saja yang berhak mendapatkan bantuan PIP?", a: "Penerima PIP adalah peserta didik yang memenuhi kriteria sesuai ketentuan pemerintah, terutama siswa yang berasal dari keluarga kurang mampu atau memiliki kondisi tertentu yang membutuhkan bantuan pendidikan. Beberapa peserta didik yang menjadi prioritas antara lain: Memiliki Kartu Indonesia Pintar (KIP), terdata sebagai keluarga kurang mampu, memiliki kondisi khusus seperti yatim/piatu atau terdampak kondisi tertentu, serta berpotensi mengalami hambatan dalam melanjutkan sekolah." },
@@ -61,20 +38,20 @@ export default function EPelayananPage() {
     { q: "Apakah Dinas Pendidikan dapat langsung memberikan atau mencairkan dana PIP?", a: "Dinas Pendidikan tidak melakukan pencairan dana secara langsung kepada siswa. Dinas berperan dalam koordinasi, pendampingan, dan pelayanan informasi terkait pelaksanaan program PIP." }
   ]
 
-  // 2. DATA FAQ MUTASI RESMI KABUPATEN BOJONEGORO
+  // DATA FAQ MUTASI RESMI KABUPATEN BOJONEGORO
   const mutasiData = [
     { q: "Apa saja persyaratan Mutasi Keluar Siswa Jenjang SD/SMP Sederajat?", a: "Persyaratan meliputi: 1) Surat pernyataan pindah dari orang tua, 2) Surat Keterangan dari sekolah asal, 3) Surat keterangan bersedia menerima siswa baru dari sekolah tujuan, 4) Fotokopi KTP, 5) Fotokopi KK, 6) Fotokopi Akta Lahir, dan 7) Fotokopi Raport Semester Akhir." },
     { q: "Apa saja persyaratan Mutasi Masuk Siswa Jenjang SD/SMP Sederajat?", a: "Persyaratan meliputi: 1) Surat Rekomendasi dari Dinas Pendidikan/Kemenag, 2) Surat Pernyataan pindah dari orang tua, 3) Surat Keterangan dari asal sekolah, 4) Surat Keterangan bersedia menerima siswa baru dari sekolah tujuan, 5) Fotokopi KTP, 6) Fotokopi KK, 7) Fotokopi Akta Lahir, dan 8) Fotokopi Raport Semester Akhir." },
     { q: "Apakah mutasi bisa dilakukan jika sekolah tujuan sudah penuh?", a: "Mutasi tetap harus memperhatikan daya tampung sekolah tujuan. Apabila jumlah siswa sudah memenuhi kapasitas, sekolah dapat mempertimbangkan sesuai aturan yang berlaku." },
     { q: "Apakah siswa dari luar Kabupaten Bojonegoro bisa masuk ke sekolah di Bojonegoro?", a: "Bisa, selama memenuhi persyaratan mutasi dan mendapatkan persetujuan dari sekolah tujuan serta mengikuti prosedur administrasi yang berlaku." },
-    { q: "Apakah siswa dari Kabupaten Bojonegoro bisa pindah ke luar daerah?", a: "Bisa. Siswa dapat mengajukan mutasi keluar dengan mengikuti prosedur yang ditetapkan sekolah asal dan sekolah tujuan." },
+    { q: "Apakah siswa dari Kabupaten Bojonegoro bisa pindah ke luar daerah?", a: "Bisa. Siswa dapat mengajukan mutasi keluar dengan mengikuti prosedur yang ditetapkan sekolah asal and sekolah tujuan." },
     { q: "Bagaimana jika data siswa belum masuk di sekolah baru?", a: "Setelah proses mutasi selesai, sekolah tujuan akan melakukan pembaruan data peserta didik sesuai mekanisme pendataan yang berlaku. Orang tua/wali dapat berkoordinasi dengan sekolah tujuan." },
-    { q: "Apakah mutasi siswa harus melalui Dinas Pendidikan?", a: "Tidak semua proses mutasi harus datang langsung ke Dinas Pendidikan. Umumnya proses administrasi dilakukan melalui sekolah asal dan sekolah tujuan. Dinas Pendidikan berperan dalam pelayanan, koordinasi, serta penanganan apabila terdapat kendala sesuai kewenangan." },
+    { q: "Apakah mutasi siswa harus melalui Dinas Pendidikan?", a: "Tidak semua proses mutasi harus datang langsung ke Dinas Pendidikan. Umumnya proses administrasi dilakukan melalui sekolah asal and sekolah tujuan. Dinas Pendidikan berperan dalam pelayanan, koordinasi, serta penanganan apabila terdapat kendala sesuai kewenangan." },
     { q: "Apakah siswa kelas akhir bisa melakukan mutasi?", a: "Mutasi pada kelas akhir perlu memperhatikan ketentuan yang berlaku karena berkaitan dengan administrasi kelulusan, ujian, dan pendataan peserta didik." },
     { q: "Bagaimana jika orang tua sudah pindah tempat tinggal tetapi anak masih sekolah di tempat lama?", a: "Orang tua dapat melakukan konsultasi dengan sekolah terkait pilihan terbaik, apakah tetap melanjutkan di sekolah lama atau mengajukan mutasi sesuai kondisi yang ada." }
   ]
 
-  // 3. DATA FAQ IJAZAH RESMI KABUPATEN BOJONEGORO
+  // DATA FAQ IJAZAH RESMI KABUPATEN BOJONEGORO
   const ijazahData = [
     { q: "Bagaimana latar belakang pengurusan dan pembagian Ijazah?", a: "Ijazah diberikan setelah peserta didik dinyatakan lulus dan seluruh proses administrasi sekolah selesai. Waktu pembagian ijazah menyesuaikan dengan kebijakan sekolah dan ketentuan dari pemerintah. Ijazah diambil melalui sekolah tempat peserta didik menyelesaikan pendidikan terakhir. Dinas Pendidikan tidak membagikan ijazah secara langsung kepada peserta didik karena penerbitan dan penyerahan dilakukan oleh satuan pendidikan." },
     { q: "Apa yang harus dilakukan pertama kali jika ijazah hilang atau rusak?", a: "Pemilik ijazah dapat melakukan pengurusan dokumen pengganti melalui sekolah yang menerbitkan ijazah tersebut. Langkah awal yang dilakukan: 1) Melapor kepada pihak sekolah asal/penerbit ijazah, 2) Menyiapkan dokumen pendukung, 3) Mengikuti proses verifikasi data oleh sekolah, dan 4) Mengajukan penerbitan dokumen pengganti sesuai prosedur." },
@@ -94,7 +71,7 @@ export default function EPelayananPage() {
     item.a.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Fungsi Login Supabase Auth
+  // Fungsi Login Supabase Auth dengan Router Refresh Fix
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -103,23 +80,28 @@ export default function EPelayananPage() {
       if (error) throw error
       
       setIsModalOpen(false)
-      setIsRedirecting(true)
-      window.location.href = '/dashboard'
+      setIsRedirecting(true) // Aktifkan screen loader pengalihan
+      
+      // 1. Paksa Next.js memvalidasi ulang cookie server-side
+      router.refresh()
+      
+      // 2. Berikan jeda mikroskopis agar siklus refresh selesai, lalu pindahkan rute
+      setTimeout(() => {
+        router.replace('/dashboard')
+      }, 100)
+
     } catch (error: any) {
-      alert('Koneksi Gagal/Kredensial Salah: ' + error.message)
-    } finally {
+      alert('Koneksi Gagal / Kredensial Salah: ' + error.message)
       setLoading(false)
     }
   }
 
-  // TAMPILAN JIKA SEDANG DIPINDAHKAN KE HALAMAN DASBOARD INTERNAL
+  // TAMPILAN JIKA SEDANG DIPINDAHKAN KE HALAMAN DASHBOARD INTERNAL
   if (isRedirecting) {
     return (
-      <div style={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div style={styles.redirectContainer}>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.15em', color: '#3b82f6', textTransform: 'uppercase' }}>
-            Mengalihkan ke Dashboard Internal...
-          </p>
+          <p style={styles.redirectText}>Memverifikasi Hak Akses & Mengalihkan...</p>
         </div>
       </div>
     )
@@ -285,7 +267,7 @@ export default function EPelayananPage() {
   )
 }
 
-// PREMIUM STYLING DI-PANDA UPDATE 2026
+// STYLING DI-PANDA
 const styles: { [key: string]: React.CSSProperties } = {
   container: { minHeight: '100vh', backgroundColor: '#070c19', backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px)`, backgroundSize: '32px 32px', fontFamily: 'sans-serif', color: '#ffffff', position: 'relative', overflowX: 'hidden', paddingBottom: '50px' },
   glowLight1: { position: 'absolute', width: '500px', height: '500px', top: '-10%', left: '-10%', background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)', pointerEvents: 'none' },
@@ -320,9 +302,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   divider: { height: '1px', backgroundColor: '#1e293b', marginBottom: '20px' },
   form: { display: 'flex', flexDirection: 'column', gap: '16px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  passwordWrapper: { position: 'relative', display: 'flex', alignItems: 'center' },
+  passwordWrapper: { position: 'relative', display: 'flex', alignItems: 'center', width: '100%' },
   label: { fontSize: '9px', fontWeight: 800, color: '#64748b', letterSpacing: '0.05em' },
   input: { padding: '12px 14px', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', fontSize: '13px', color: '#ffffff', outline: 'none', width: '100%', boxSizing: 'border-box' },
   toggleButton: { position: 'absolute', right: '14px', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-  button: { backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }
+  button: { backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' },
+  redirectContainer: { backgroundColor: '#070c19', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0, zIndex: 9999 },
+  redirectText: { fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.15em', color: '#3b82f6', textTransform: 'uppercase', fontFamily: 'sans-serif' }
 }

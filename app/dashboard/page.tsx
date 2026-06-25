@@ -10,7 +10,6 @@ interface StatCardProps {
 }
 
 export default function DashboardPage() {
-  // State untuk data statistik real-time dari database
   const [stats, setStats] = useState({
     suratMasuk: 0,
     suratKeluar: 0,
@@ -25,33 +24,41 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        // Ambil data user yang sedang login
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user?.email) {
-          setOperatorName(user.email.split('@')[0].toUpperCase())
+        // ✅ 1. GUNAKAN getSession() yang lebih aman dan cepat untuk Client Component
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user?.email) {
+          setOperatorName(session.user.email.split('@')[0].toUpperCase())
         }
 
-        // Contoh pengambilan jumlah data secara paralel dari masing-masing tabel Supabase
-        // Catatan: Sesuaikan nama tabel jika berbeda di database Anda
-        const [smCount, skCount, ndCount, kgCount, skbCount, skkCount] = await Promise.all([
-          supabase.from('surat_masuk').select('*', { count: 'exact', head: true }),
-          supabase.from('surat_keluar').select('*', { count: 'exact', head: true }),
-          supabase.from('nota_dinas').select('*', { count: 'exact', head: true }),
-          supabase.from('kegiatan').select('*', { count: 'exact', head: true }),
-          supabase.from('sk_bupati').select('*', { count: 'exact', head: true }),
-          supabase.from('sk_kadin').select('*', { count: 'exact', head: true }),
-        ])
+        // ✅ 2. AMBIL DATA SECARA INDIVIDUAL (Bukan Promise.all kaku)
+        // Ini mencegah seluruh halaman crash jika salah satu tabel kosong/belum diatur RLS-nya
+        const tables = ['surat_masuk', 'surat_keluar', 'nota_dinas', 'kegiatan', 'sk_bupati', 'sk_kadin']
+        const counts: { [key: string]: number } = {}
+
+        for (const table of tables) {
+          const { count, error } = await supabase
+            .from(table)
+            .select('*', { count: 'exact', head: true })
+          
+          if (error) {
+            console.warn(`Gagal membaca statistik tabel [${table}]:`, error.message)
+            counts[table] = 0 // Beri nilai 0 jika error agar layout tidak rusak
+          } else {
+            counts[table] = count || 0
+          }
+        }
 
         setStats({
-          suratMasuk: smCount.count || 0,
-          suratKeluar: skCount.count || 0,
-          notaDinas: ndCount.count || 0,
-          kegiatan: kgCount.count || 0,
-          skBupati: skbCount.count || 0,
-          skKadin: skkCount.count || 0,
+          suratMasuk: counts['surat_masuk'],
+          suratKeluar: counts['surat_keluar'],
+          notaDinas: counts['nota_dinas'],
+          kegiatan: counts['kegiatan'],
+          skBupati: counts['sk_bupati'],
+          skKadin: counts['sk_kadin'],
         })
+
       } catch (error) {
-        console.error('Gagal mengambil data statistik:', error)
+        console.error('Gagal mengambil data statistik internal:', error)
       } finally {
         setLoading(false)
       }
@@ -60,7 +67,6 @@ export default function DashboardPage() {
     fetchDashboardData()
   }, [])
 
-  // Mendapatkan waktu salam dinamis
   const getGreeting = () => {
     const hours = new Date().getHours()
     if (hours < 11) return 'Selamat Pagi'
@@ -130,8 +136,6 @@ export default function DashboardPage() {
 
       {/* PANEL PANDUAN PENGGUNAAN & MONITORING LOG */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* LOG AKTIVITAS / INFORMASI TERKINI */}
         <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex flex-col">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
@@ -158,19 +162,9 @@ export default function DashboardPage() {
               </div>
               <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">2 jam yang lalu</span>
             </div>
-
-            <div className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors text-[11px]">
-              <div className="bg-amber-50 text-amber-600 p-1 rounded font-bold shrink-0">🔄</div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-slate-800 truncate">Backup Database Terjadwal</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Sistem otomatis mencadangkan data ke cloud storage</p>
-              </div>
-              <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">Hari ini, 00:00</span>
-            </div>
           </div>
         </div>
 
-        {/* PANDUAN PANDUAN OPERATOR */}
         <div className="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex flex-col">
           <div className="pb-3 border-b border-slate-100 mb-3">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
@@ -184,17 +178,15 @@ export default function DashboardPage() {
             </div>
             <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
               <span className="font-bold text-slate-800 block mb-0.5">2. Validasi Tanggal</span>
-              Pastikan tanggal surat disesuaikan dengan tanggal fisik lembar surat, bukan tanggal saat melakukan entri data.
+              Pastikan tanggal surat disesuaikan dengan tanggal fisik lembar surat.
             </div>
           </div>
         </div>
-
       </section>
     </div>
   )
 }
 
-// Komponen Pembantu Kartu Statistik (Clean & Modern UI)
 function StatCard({ title, count, icon, color }: StatCardProps) {
   return (
     <div className={`bg-white border border-slate-200/80 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-200 ${color}`}>
