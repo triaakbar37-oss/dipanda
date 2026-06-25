@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase'
 export default function EPelayananPage() {
   const router = useRouter()
   
-  // Perbaikan 1: Setel default ke false agar portal publik langsung terbuka instan tanpa delay
-  const [authLoading, setAuthLoading] = useState(false)
+  // State loader hanya aktif jika sistem BENAR-BENAR mendeteksi sesi aktif dan siap pindah halaman
+  const [isRedirecting, setIsRedirecting] = useState(false)
   
   // State untuk Fitur Portal & FAQ
   const [activeTab, setActiveTab] = useState<'pip' | 'mutasi' | 'ijazah'>('pip')
@@ -20,24 +20,28 @@ export default function EPelayananPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // Perbaikan 2: Lakukan pengecekan sesi di latar belakang (background check) tanpa mengunci UI publik
+  // FILTER PENGAMAN GERBANG UTAMA (BACKGROUND SESSION CHECK)
   useEffect(() => {
-    // Jalankan pengecekan sesi secara asinkronus
-    const checkSession = async () => {
+    const checkUserSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          // Jika operator terdeteksi sudah login, kunci layar sebentar lalu lempar ke dashboard
-          setAuthLoading(true)
-          router.replace('/dashboard')
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) {
+          console.error("Supabase session error:", error.message)
+          return
         }
-      } catch (error) {
-        console.error("Auth check error:", error)
+        
+        if (session) {
+          // Jika ada sesi aktif, langsung alihkan menggunakan native window location (jauh lebih aman dari cache router)
+          setIsRedirecting(true)
+          window.location.href = '/dashboard'
+        }
+      } catch (err) {
+        console.error("Gagal memeriksa sesi auth:", err)
       }
     }
 
-    checkSession()
-  }, [router])
+    checkUserSession()
+  }, [])
 
   // 1. DATA FAQ PIP RESMI KABUPATEN BOJONEGORO
   const pipData = [
@@ -52,7 +56,7 @@ export default function EPelayananPage() {
     { q: "Kapan dana PIP bisa dicairkan?", a: "Pencairan dana PIP dilakukan secara bertahap sesuai jadwal yang ditetapkan pemerintah. Waktu pencairan setiap siswa dapat berbeda tergantung proses administrasi dan status penerima." },
     { q: "Apa yang harus dilakukan jika dana PIP belum masuk?", a: "Apabila dana belum diterima, orang tua/wali dapat melakukan pengecekan terlebih dahulu melalui sekolah. Kemungkinan terdapat proses yang masih berjalan seperti aktivasi rekening, verifikasi data, atau menunggu tahap pencairan." },
     { q: "Apakah siswa pindahan masih bisa mendapatkan PIP?", a: "Siswa pindahan tetap memiliki kesempatan mendapatkan PIP selama data peserta didik sudah diperbarui oleh sekolah dan memenuhi ketentuan penerima bantuan." },
-    { q: "Apakah wajib memiliki KIP untuk mendapatkan PIP?", a: "Tidak selalu. KIP menjadi salah satu dasar penerima bantuan, namun penetapan penerima PIP juga mempertimbangkan hasil pendataan dan pengusulan sesuai kriteria yang berlaku." },
+    { q: "Apakah wajib memiliki KIP untuk mendapatkan PIP?", a: "Tidak selalu. KIP menjadi salah satu dasar penerima bantuan, namun penetapan penerima PIP juga mempertimbangkan hasil pendataan and pengusulan sesuai kriteria yang berlaku." },
     { q: "Mengapa teman satu sekolah mendapatkan PIP sedangkan anak saya belum?", a: "Setiap siswa memiliki kondisi data yang berbeda. Penetapan penerima berdasarkan data yang masuk, hasil verifikasi, serta kriteria yang telah ditentukan pemerintah." },
     { q: "Apakah Dinas Pendidikan dapat langsung memberikan atau mencairkan dana PIP?", a: "Dinas Pendidikan tidak melakukan pencairan dana secara langsung kepada siswa. Dinas berperan dalam koordinasi, pendampingan, dan pelayanan informasi terkait pelaksanaan program PIP." }
   ]
@@ -99,6 +103,7 @@ export default function EPelayananPage() {
       if (error) throw error
       
       setIsModalOpen(false)
+      setIsRedirecting(true)
       window.location.href = '/dashboard'
     } catch (error: any) {
       alert('Koneksi Gagal/Kredensial Salah: ' + error.message)
@@ -107,12 +112,12 @@ export default function EPelayananPage() {
     }
   }
 
-  // Hanya memblokir layar jika proses pengalihan rute ke /dashboard sedang berjalan
-  if (authLoading) {
+  // TAMPILAN JIKA SEDANG DIPINDAHKAN KE HALAMAN DASBOARD INTERNAL
+  if (isRedirecting) {
     return (
       <div style={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.15em', color: '#64748b', textTransform: 'uppercase' }}>
+          <p style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.15em', color: '#3b82f6', textTransform: 'uppercase' }}>
             Mengalihkan ke Dashboard Internal...
           </p>
         </div>
