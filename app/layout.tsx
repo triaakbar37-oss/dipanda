@@ -19,6 +19,23 @@ export default function RootLayout({
 
   const gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1&to=triaakbar37@gmail.com&su=Tanya%20E-Arsip"
 
+  // Memisahkan halaman portal publik dan halaman dashboard internal
+  const isPublicPage = pathname === '/' || pathname === '/login' || pathname?.startsWith('/e-pelayanan')
+
+  if (isPublicPage) {
+    return (
+      <html lang="en">
+        <body className="min-h-screen bg-[#070c19] text-white antialiased">
+          <main className="w-full min-h-screen">
+            {children}
+          </main>
+          <div id="modal-root"></div>
+        </body>
+      </html>
+    )
+  }
+
+  // LAYOUT UTAMA DASHBOARD INTERNAL TERPROTEKSI (DENGAN SIDEBAR)
   return (
     <html lang="en">
       <body className="flex flex-col md:flex-row min-h-screen bg-[#f0f7ff] text-slate-900 antialiased overflow-x-hidden">
@@ -37,7 +54,7 @@ export default function RootLayout({
           </button>
         </header>
 
-        {/* SIDEBAR - LEBAR DIKUNCI DI w-44 (SUPER RAMPING, TEKS AMAN & TIDAK HILANG) */}
+        {/* SIDEBAR OPERATOR */}
         <aside className={`
           fixed inset-y-0 left-0 md:relative z-30
           w-44 bg-slate-900 text-white flex flex-col h-screen shadow-lg
@@ -62,14 +79,14 @@ export default function RootLayout({
             </div>
           </div>
           
-          {/* Menu Navigasi - Jarak super rapat (space-y-0.5) & ukuran teks mini (text-[10px]) */}
+          {/* Menu Navigasi Dashboard Baru */}
           <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto pb-4 custom-scrollbar text-[10px]">
             <div className="text-[7.5px] font-black text-slate-500 uppercase tracking-[0.15em] ml-2 my-1.5">Main Menu</div>
             
             <Link 
-              href="/" 
+              href="/dashboard" 
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/') ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide transition-all ${isActive('/dashboard') ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 text-slate-400'}`}
             >
               <span className="text-xs shrink-0">🏠</span> <span className="truncate">Dashboard</span>
             </Link>
@@ -122,7 +139,6 @@ export default function RootLayout({
               <span className="text-xs shrink-0">🏛️</span> <span className="truncate">SK Bupati</span>
             </Link>
 
-            {/* KODE YANG TADI ERROR SUDAH DIPERBAIKI DI SINI (Petik penutup '/sk_kadin' sudah ada) */}
             <Link 
               href="/sk_kadin" 
               onClick={() => setIsMobileMenuOpen(false)}
@@ -140,6 +156,17 @@ export default function RootLayout({
             >
               <span className="text-xs shrink-0">🗑️</span> <span className="truncate">Pusat Sampah</span>
             </Link>
+
+            {/* KEMBALI KE PORTAL UTAMA */}
+            <div className="pt-2 border-t border-slate-800/50 mt-2">
+              <Link 
+                href="/" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-md font-bold uppercase tracking-wide text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
+              >
+                <span className="text-xs shrink-0">🌐</span> <span className="truncate">Lihat Portal</span>
+              </Link>
+            </div>
           </nav>
 
           {/* Tombol Footer Developer Info */}
@@ -156,7 +183,7 @@ export default function RootLayout({
           </div>
         </aside>
 
-        {/* Lapisan Gelap di HP */}
+        {/* Lapisan Gelap di HP saat Sidebar terbuka */}
         {isMobileMenuOpen && (
           <div 
             className="fixed inset-0 bg-black/40 z-20 md:hidden backdrop-blur-sm"
@@ -164,8 +191,8 @@ export default function RootLayout({
           ></div>
         )}
 
-        {/* AREA CONTENT UTAMA */}
-        <main className="flex-1 min-h-[calc(100vh-3.5rem)] md:h-screen overflow-y-auto relative z-10 w-full">
+        {/* AREA KONTEN UTAMA DASHBOARD */}
+        <main className="flex-1 min-h-[calc(100vh-3.5rem)] md:h-screen overflow-y-auto relative z-10 w-full bg-[#f8fafc]">
           {children}
         </main>
 
